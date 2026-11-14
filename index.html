@@ -1,0 +1,2064 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a">
+<meta name="description" content="Send files between phone and PC directly. No install, no upload to any server.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>FileShare — send files anywhere</title>
+<style>
+:root{--bg:#0b0f1a;--card:#131a2a;--line:#222c44;--text:#e8ecf6;--mut:#8a96b3;--acc:#5b7cff;--acc2:#8b5cf6;--ok:#22c55e;--err:#ef4444;--r:18px}
+:root.light{--bg:#f3f5fb;--card:#fff;--line:#e3e8f2;--text:#141a2b;--mut:#6a7592}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,"Noto Nastaliq Urdu",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:env(safe-area-inset-top) 0 40px}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;padding:8px 0 14px;gap:10px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px}
+.logo i{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;font-style:normal;color:#fff}
+.row{display:flex;align-items:center;gap:10px}
+.pill{font-size:12px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);color:var(--mut);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mut);flex:none}
+.dot.on{background:var(--ok)}.dot.err{background:var(--err)}.dot.wait{background:#f59e0b}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px}
+.tab{border:1px solid var(--line);background:transparent;color:var(--mut);padding:9px 16px;border-radius:99px;cursor:pointer;font:600 14px inherit;font-family:inherit;white-space:nowrap}
+.tab.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border-color:transparent}
+.panel{display:none}.panel.on{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.card h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:14px;font-weight:600}
+.card+.card{margin-top:0}
+.code{font:700 34px/1 ui-monospace,Consolas,monospace;letter-spacing:.14em;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent;direction:ltr}
+.me{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+#qr{background:#fff;padding:8px;border-radius:12px;line-height:0}
+.btn{border:0;cursor:pointer;font:600 14px inherit;font-family:inherit;color:#fff;background:linear-gradient(135deg,var(--acc),var(--acc2));padding:11px 16px;border-radius:12px;transition:.15s;text-decoration:none;display:inline-block}
+.btn:hover{filter:brightness(1.1)}
+.btn:disabled{opacity:.35;cursor:default;filter:none}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.sm{padding:7px 12px;font-size:13px}
+.btn.danger{background:var(--err)}
+input[type=text],input[type=password],textarea,select{width:100%;background:transparent;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:11px;font:inherit;outline:none}
+select option{background:var(--card);color:var(--text)}
+input:focus,textarea:focus,select:focus{border-color:var(--acc)}
+#join{text-transform:uppercase;letter-spacing:.2em;font-family:ui-monospace,Consolas,monospace;font-size:18px;direction:ltr}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:34px 16px;text-align:center;color:var(--mut);cursor:pointer;transition:.2s}
+.drop.over{border-color:var(--acc);background:rgba(91,124,255,.08);color:var(--text)}
+.drop b{display:block;font-size:17px;color:var(--text);margin-bottom:4px}
+.peers{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.peer{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.peer .nm2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub2{font-size:12px;color:var(--mut)}
+.empty{color:var(--mut);font-size:14px;padding:6px 0}
+.sec{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px}
+.ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(91,124,255,.15);color:var(--acc);font-weight:700;flex:none}
+.item.in .ic{background:rgba(34,197,94,.15);color:var(--ok)}
+.mid{flex:1;min-width:0}
+.nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;direction:ltr;text-align:start}
+.bar{height:6px;background:var(--line);border-radius:9px;overflow:hidden;margin:7px 0 4px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .15s}
+.item.done .bar i{background:var(--ok)}.item.fail .bar i{background:var(--err)}
+.sub{font-size:12px;color:var(--mut)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ib{padding:6px 10px;font-size:13px}
+.msg{padding:10px 12px;border-radius:12px;background:rgba(139,92,246,.12);word-break:break-word;white-space:pre-wrap;cursor:pointer}
+.msg.out{background:rgba(91,124,255,.12)}
+.msg small{display:block;color:var(--mut);margin-bottom:3px}
+label.chk{display:flex;gap:8px;align-items:center;color:var(--mut);font-size:14px;margin-top:12px}
+label.chk input{width:auto}
+.field{margin-top:12px}.field>label{display:block;font-size:13px;color:var(--mut);margin-bottom:5px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,90px);background:var(--card);border:1px solid var(--line);padding:11px 18px;border-radius:12px;transition:.3s;z-index:50;max-width:90vw;text-align:center}
+#toast.show{transform:translate(-50%,0)}
+.full{grid-column:1/-1}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(5,8,15,.65);display:none;align-items:center;justify-content:center;z-index:30;padding:16px;backdrop-filter:blur(4px)}
+.modal.on{display:flex}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;max-width:420px;width:100%}
+.sheet.big{max-width:920px;max-height:92vh;overflow:auto}
+.vcode{font:700 30px ui-monospace,monospace;letter-spacing:.25em;text-align:center;margin:14px 0;direction:ltr}
+.viewer img,.viewer video{max-width:100%;max-height:70vh;display:block;margin:0 auto;border-radius:10px}
+.viewer iframe{width:100%;height:70vh;border:0;border-radius:10px;background:#fff}
+.viewer pre{white-space:pre-wrap;word-break:break-word;font:13px/1.5 ui-monospace,Consolas,monospace;max-height:70vh;overflow:auto;direction:ltr;text-align:left}
+/* file manager */
+.stor{height:6px;background:var(--line);border-radius:9px;overflow:hidden;margin:6px 0 14px}
+.stor i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));width:0}
+.fm-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.fm-tools input[type=text]{width:160px;padding:8px 10px}
+.fm-tools select{width:auto;padding:8px 10px}
+.crumbs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;color:var(--mut);direction:ltr}
+.crumbs a{cursor:pointer;color:var(--acc)}
+.fm-list{display:flex;flex-direction:column;gap:4px}
+.frow{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:12px;border:1px solid transparent;cursor:pointer;position:relative}
+.frow:hover{background:rgba(91,124,255,.07)}
+.frow.sel{border-color:var(--acc);background:rgba(91,124,255,.12)}
+.frow .ck{width:auto;flex:none}
+.fico{font-size:24px;width:38px;text-align:center;flex:none}
+.finfo{min-width:0;flex:1}
+.finfo b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;direction:ltr;text-align:start}
+.fmeta{font-size:12px;color:var(--mut)}
+.fm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.fm-grid .frow{flex-direction:column;text-align:center;padding:12px 8px;border-color:var(--line)}
+.fm-grid .frow .ck{position:absolute;top:8px;inset-inline-start:8px}
+.fm-grid .fico{width:100%;height:84px;display:grid;place-items:center;font-size:42px;overflow:hidden}
+.fm-grid .fico img{max-width:100%;max-height:84px;border-radius:8px}
+.fm-grid .finfo{width:100%}
+.note{padding:12px;border-radius:12px;background:rgba(245,158,11,.12);color:var(--text);margin-bottom:12px}
+.kv{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border:0}
+html[dir=rtl] .code,html[dir=rtl] #join{text-align:left}
+/* ---- v3: global fixes ---- */
+[hidden]{display:none!important}
+body{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+#toast{bottom:calc(92px + env(safe-area-inset-bottom));pointer-events:none;opacity:0;transform:translate(-50%,20px)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+header .row{flex-wrap:nowrap}header .btn,header .pill{flex:none;white-space:nowrap}
+/* bottom navigation */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-around;gap:0;margin:0;overflow:visible;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.tab{flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:transparent;border-radius:14px;padding:4px;color:var(--mut);font:600 11px inherit;font-family:inherit}
+.tab .ti{font-size:20px;line-height:1;padding:4px 20px;border-radius:99px;transition:.15s}
+.tab.on{background:transparent;color:var(--text);border:0}
+.tab.on .ti{background:rgba(91,124,255,.22)}
+/* app bar */
+.gbar{display:flex;align-items:center;gap:2px;min-height:52px;position:sticky;top:0;z-index:6;background:var(--bg);padding:4px 0}
+.gbar .gt{flex:1;min-width:0;font-size:21px;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 8px}
+.ibtn{width:42px;height:42px;border-radius:50%;border:0;background:transparent;color:var(--text);font-size:20px;cursor:pointer;display:grid;place-items:center;flex:none;font-family:inherit}
+.ibtn:hover{background:rgba(127,127,127,.16)}
+.gsearch{display:flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:2px 6px;margin:6px 0;position:sticky;top:0;z-index:6}
+.gsearch input{border:0;flex:1;background:transparent;padding:10px 6px;border-radius:0;min-width:0}
+.gcr{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:var(--mut);margin:2px 2px 10px;direction:ltr;font-size:14px}
+.gcr a{cursor:pointer;color:var(--acc)}.gcr .sep{opacity:.6}
+.gsec{font-size:13px;font-weight:600;color:var(--mut);margin:20px 2px 10px}
+.gcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:6px}
+.gcard .gst{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.gcard .stor{margin:10px 0 8px}
+.gcats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.gcat{border:1px solid var(--line);border-radius:18px;padding:14px 6px 12px;text-align:center;cursor:pointer;background:var(--card);transition:.12s;min-width:0}
+.gcat:hover{border-color:var(--acc)}
+.gcat .ci{width:48px;height:48px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center;font-size:23px}
+.gcat .cn{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gcat .sub2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grecent{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.grecent::-webkit-scrollbar{display:none}
+.rc{width:104px;flex:none;cursor:pointer}
+.rc .gth{border-radius:14px;overflow:hidden}
+.gn{font-size:12.5px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:start}
+.gm{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gth{aspect-ratio:1;display:grid;place-items:center;font-size:38px;background:rgba(91,124,255,.1);position:relative;overflow:hidden}
+.gi{width:100%;height:100%;display:grid;place-items:center}
+.gi img{width:100%;height:100%;object-fit:cover}
+/* list rows */
+.gf-list{display:flex;flex-direction:column;gap:2px}
+.grow{display:flex;align-items:center;gap:14px;padding:7px 4px;border-radius:16px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;position:relative}
+.grow:hover{background:rgba(127,127,127,.09)}
+.grow.sel{background:rgba(91,124,255,.18)}
+.gic{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:24px;background:rgba(91,124,255,.12);overflow:hidden;flex:none;position:relative}
+.ginfo{flex:1;min-width:0}
+.ginfo b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:start}
+.ginfo span{display:block;font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gchk{position:absolute;inset:0;display:none;place-items:center;background:var(--acc);color:#fff;font-size:22px;font-weight:700}
+.sel .gchk{display:grid}
+/* grid tiles */
+.gf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}
+.gtile{position:relative;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--line);cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.gtile .gn{padding:6px 8px 0}.gtile .gm{padding:0 8px 7px}
+.gtile.sel{outline:3px solid var(--acc);outline-offset:-3px}
+.gtd{position:absolute;top:6px;inset-inline-end:6px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:16px;cursor:pointer;z-index:2}
+.gtile.sel .gchk{background:rgba(91,124,255,.55)}
+.gempty{text-align:center;color:var(--mut);padding:54px 10px}
+.gempty .gei{font-size:54px;margin-bottom:8px}
+/* fab + menu + pickers */
+.fab{position:fixed;inset-inline-end:20px;bottom:calc(92px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:19px;border:0;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-size:30px;box-shadow:0 10px 28px rgba(0,0,0,.4);z-index:15;cursor:pointer;display:none;place-items:center}
+.fab.on{display:grid}
+.gmenu{position:fixed;z-index:70;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px;min-width:200px;box-shadow:0 14px 36px rgba(0,0,0,.45);white-space:pre}
+.gmenu button{display:block;width:100%;text-align:start;background:none;border:0;color:var(--text);padding:11px 12px;border-radius:10px;font:inherit;cursor:pointer}
+.gmenu button:hover{background:rgba(127,127,127,.16)}
+.gmenu button.danger{color:var(--err)}
+.gmenu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+#mDlg{z-index:80}
+.pklist{max-height:44vh;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.pkrow{padding:11px 10px;border-radius:12px;cursor:pointer;direction:ltr}
+.pkrow:hover{background:rgba(127,127,127,.14)}
+#dI{margin-top:6px}
+
+/* ---- v3.1: clear selection + quick actions ---- */
+.gck{width:30px;height:30px;border-radius:50%;border:2px solid var(--mut);background:transparent;color:#fff;display:grid;place-items:center;cursor:pointer;flex:none;padding:0;font-size:16px;font-weight:700}
+.gck::after{content:'✓';opacity:0}
+.sel .gck{background:var(--acc);border-color:var(--acc)}.sel .gck::after{opacity:1}
+.grow .ibtn{width:38px;height:38px}
+.gdel{font-size:18px}
+.grow.sel{background:rgba(91,124,255,.16);outline:2px solid var(--acc);outline-offset:-2px}
+.gtile .gck{position:absolute;top:6px;inset-inline-start:6px;z-index:2;background:rgba(0,0,0,.4);border-color:#fff}
+.gtile.sel .gck{background:var(--acc);border-color:var(--acc)}
+.gplay{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.gplay i{width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.58);color:#fff;font-style:normal;font-size:11px;display:grid;place-items:center;padding-inline-start:2px}
+.gic .gplay i{width:20px;height:20px;font-size:9px}
+#dImg{display:block;max-width:100%;max-height:170px;border-radius:12px;margin:12px auto 2px;object-fit:contain}
+/* ---- v3.2: play/view in place ---- */
+.ginline{position:relative;margin:4px 0 10px;border-radius:14px;overflow:hidden;background:#000;display:block}
+.ginline.aud{background:transparent}
+.ginline video,.ginline img{display:block;width:100%;max-height:44vh;object-fit:contain;background:#000}
+.ginline audio{width:100%;display:block}
+.ginx{position:absolute;top:6px;inset-inline-end:6px;width:32px!important;height:32px!important;background:rgba(0,0,0,.6);color:#fff;font-size:15px;z-index:3}
+.dlist{max-height:46vh;overflow:auto;margin:12px 0 4px;display:flex;flex-direction:column;gap:6px}
+.dli{display:flex;align-items:center;gap:12px;padding:6px;border-radius:14px;border:1px solid var(--line)}
+.dli .gic{width:56px;height:56px}
+/* ---- v4A: bin / private / clean ---- */
+.gnote{padding:12px 14px;border-radius:14px;background:rgba(91,124,255,.1);color:var(--mut);font-size:13px;margin:6px 0 14px;white-space:pre-line}
+.gcl{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--line);border-radius:16px;cursor:pointer;background:var(--card);margin-bottom:8px}
+.gcl:hover{border-color:var(--acc)}
+.gcl .ci{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;flex:none}
+.gcl .chev{font-size:26px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><i>⇄</i>FileShare</div>
+    <div class="row">
+      <div class="pill"><span class="dot" id="sdot"></span><span id="stxt">…</span></div>
+      <button class="btn ghost sm" id="langBtn">اردو</button>
+      <button class="btn ghost sm" id="themeBtn" title="Theme">🌓</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab on" data-tab="files"><span class="ti">📁</span><span data-i="tabFiles"></span></button>
+    <button class="tab" data-tab="share"><span class="ti">⇄</span><span data-i="tabShare"></span></button>
+    <button class="tab" data-tab="hist"><span class="ti">🕘</span><span data-i="tabHist"></span></button>
+    <button class="tab" data-tab="set"><span class="ti">⚙️</span><span data-i="tabSet"></span></button>
+  </nav>
+
+  <!-- SHARE -->
+  <section class="panel" id="p-share">
+    <div class="grid">
+      <div class="card">
+        <h2 data-i="thisDev">This device</h2>
+        <div class="me">
+          <div id="qr"></div>
+          <div>
+            <div class="code" id="code">······</div>
+            <div class="sub" style="margin:8px 0 12px" data-i="scanHint"></div>
+            <div class="row"><button class="btn sm" id="copy" data-i="copyLink"></button><button class="btn ghost sm" id="newcode" data-i="newCode"></button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i="connTitle">Connect</h2>
+        <div class="row"><input type="text" id="join" maxlength="6" placeholder="CODE" autocomplete="off" autocapitalize="characters"><button class="btn" id="go" data-i="connect"></button></div>
+        <div class="peers" id="peers"></div>
+        <div class="sec"><button class="btn ghost sm" id="offBtn" data-i="offBtn"></button></div>
+        <div class="sec"><div class="sub2" data-i="myDevs" style="margin-bottom:8px"></div><div class="peers" id="known"></div></div>
+      </div>
+
+      <div class="card full">
+        <h2 data-i="send">Send</h2>
+        <div class="drop" id="drop"><b data-i="dropT"></b><span data-i="dropS"></span></div>
+        <input type="file" id="files" multiple hidden>
+        <input type="file" id="folder" webkitdirectory hidden>
+        <input type="file" id="camP" accept="image/*" capture="environment" hidden>
+        <input type="file" id="camV" accept="video/*" capture="environment" hidden>
+        <div class="row" style="margin-top:12px;flex-wrap:wrap">
+          <button class="btn ghost sm" id="pickFiles" data-i="pickFiles"></button>
+          <button class="btn ghost sm" id="pickFolder" data-i="pickFolder"></button>
+          <button class="btn ghost sm" id="camPB" data-i="camPhoto" hidden></button><button class="btn ghost sm" id="camVB" data-i="camVideo" hidden></button>
+        </div>
+        <div style="margin-top:14px"><textarea id="txt" rows="2" data-ph="txtPh"></textarea>
+        <div class="row" style="margin-top:8px"><button class="btn sm" id="sendTxt" data-i="sendTxt"></button><button class="btn ghost sm" id="paste" data-i="paste"></button></div></div>
+      </div>
+
+      <div class="card full">
+        <div class="row" style="justify-content:space-between;flex-wrap:wrap;margin-bottom:8px"><h2 data-i="feed" style="margin:0">Transfers</h2><div class="row" style="flex-wrap:wrap"><button class="btn ghost sm" id="pauseAll" data-i="pauseAll"></button><button class="btn ghost sm" id="resumeAll" data-i="resumeAll"></button><button class="btn ghost sm" id="clearDone" data-i="clearDone"></button></div></div>
+        <div class="list" id="list"><div class="empty" id="none" data-i="nothing"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILES (Google-Files style) -->
+  <section class="panel on" id="p-files">
+    <div class="gbar" id="gBar">
+      <button class="ibtn" id="gBack" hidden>←</button>
+      <div class="gt" id="gTitle"></div>
+      <button class="ibtn" id="gSearch">🔍</button>
+      <button class="ibtn" id="gView">▦</button>
+      <button class="ibtn" id="gMore">⋮</button>
+    </div>
+    <div class="gbar" id="gSel" hidden>
+      <button class="ibtn" id="sX">✕</button>
+      <div class="gt" id="sCount"></div>
+      <button class="ibtn" id="sAll">☑</button>
+      <button class="ibtn" id="sSend">📤</button>
+      <button class="ibtn" id="sMore">⋮</button>
+    </div>
+    <div class="gsearch" id="gSrch" hidden>
+      <button class="ibtn" id="sClose">←</button>
+      <input type="text" id="fmQ" data-ph="searchPh" autocomplete="off">
+      <button class="ibtn" id="sClr">✕</button>
+    </div>
+    <div class="note" id="fmNo" hidden data-i="noSupport"></div>
+    <div class="gcr" id="gCrumbs" hidden></div>
+    <div id="gBody"></div>
+  </section>
+
+
+<!-- HISTORY -->
+  <section class="panel" id="p-hist">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0" data-i="hist"></h2><div class="row"><button class="btn ghost sm" id="histCsv" data-i="exportCsv"></button><button class="btn ghost sm" id="histClear" data-i="clearHist"></button></div></div>
+      <div class="list" id="histList"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="panel" id="p-set">
+    <div class="grid">
+      <div class="card">
+        <h2 data-i="tabSet"></h2>
+        <div class="field"><label data-i="devName"></label><input type="text" id="sName" maxlength="30"></div>
+        <div class="field"><label data-i="theme"></label>
+          <select id="sTheme"><option value="" data-i="themeSys"></option><option value="dark" data-i="themeDark"></option><option value="light" data-i="themeLight"></option></select></div>
+        <label class="chk"><input type="checkbox" id="sAuto"><span data-i="autosave"></span></label>
+        <label class="chk"><input type="checkbox" id="sComp"><span data-i="compress"></span></label>
+        <label class="chk"><input type="checkbox" id="sVerify"><span data-i="sVerify"></span></label>
+        <label class="chk"><input type="checkbox" id="sPack"><span data-i="sPack"></span></label>
+        <div class="row" style="margin-top:8px"><span class="sub2" data-i="sLimit" style="flex:1"></span><input type="number" id="sLimit" min="0" step="0.5" style="width:80px"></div>
+        <label class="chk"><input type="checkbox" id="sVibe"><span data-i="vibe"></span></label>
+        <div class="sec"><button class="btn ghost sm" id="pinReset" data-i="pinReset"></button></div>
+        <label class="chk"><input type="checkbox" id="sClip"><span data-i="sClip"></span></label>
+        <div class="sec" id="pcBox" hidden><div class="sub2" data-i="pcT"></div><div class="row" style="margin:6px 0"><span id="pcName" class="sub2" style="flex:1"></span><button class="btn ghost sm" id="pcPick" data-i="pcPick"></button></div><label class="chk"><input type="checkbox" id="sPc"><span data-i="pcAuto"></span></label>
+<label class="chk"><input type="checkbox" id="sPcMove"><span data-i="pcMove"></span></label></div>
+        <div class="field"><label><span data-i="quality"></span>: <span id="sQv"></span></label><input type="range" id="sQ" min="40" max="95" step="5" style="width:100%"></div>
+        <div class="sub2" style="margin-top:16px">🔒 <span data-i="encNote"></span></div>
+      </div>
+      <div class="card">
+        <h2 data-i="trustedT"></h2>
+        <div id="trustList"></div>
+        <div class="sec"><h2 data-i="turnT"></h2>
+          <div class="field"><label data-i="turnUrl"></label><input type="text" id="turnUrl" placeholder="turn:example.com:443, turns:example.com:443?transport=tcp"></div>
+          <div class="field"><label data-i="turnUser"></label><input type="text" id="turnUser"></div>
+          <div class="field"><label data-i="turnCred"></label><input type="password" id="turnCred"></div>
+          <button class="btn sm" id="turnSave" style="margin-top:12px" data-i="saveRestart"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- approval modal -->
+<div class="modal" id="mAsk"><div class="sheet">
+  <h3 id="askT" style="margin-bottom:6px"></h3>
+  <div class="sub2" data-i="verify"></div>
+  <div class="vcode" id="askV"></div>
+  <label class="chk" style="justify-content:center"><input type="checkbox" id="askTrust"><span data-i="trust"></span></label>
+  <div class="row" style="margin-top:18px;justify-content:center"><button class="btn" id="askAllow" data-i="allow"></button><button class="btn ghost" id="askDeny" data-i="deny"></button></div>
+</div></div>
+<div class="modal" id="mRem"><div class="sheet big">
+  <div class="row" style="justify-content:space-between"><h3 id="remT"></h3><button class="btn ghost sm" id="remX">✕</button></div>
+  <div class="row" style="margin:8px 0"><button class="btn ghost sm" id="remUp" hidden>←</button><span class="sub2" id="remPath"></span></div>
+  <div id="remList"></div>
+</div></div>
+<div class="modal" id="mOff"><div class="sheet big">
+  <div class="row" style="justify-content:space-between"><h3 data-i="offT"></h3><button class="btn ghost sm" id="offX">✕</button></div>
+  <div class="sub2" data-i="offHint" style="margin:6px 0 12px"></div>
+  <div class="row" style="flex-wrap:wrap"><button class="btn sm" id="offStartB" data-i="offStart"></button><button class="btn ghost sm" id="offJoinB" data-i="offJoin"></button></div>
+  <video id="offVid" playsinline muted hidden style="width:100%;max-height:240px;margin-top:10px;border-radius:12px;background:#000"></video>
+  <div id="offHost" hidden style="margin-top:14px">
+    <div class="sub2" data-i="offCode"></div>
+    <div id="offHostCodeQr" style="margin:8px 0;background:#fff;display:inline-block;padding:6px;border-radius:8px"></div>
+    <textarea id="offHostCode" rows="3" readonly></textarea>
+    <div class="sub2" data-i="offPaste" style="margin-top:12px"></div>
+    <textarea id="offHostIn" rows="3"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn sm" id="offFin" data-i="offFinish"></button><button class="btn ghost sm" id="offScanH" data-i="offScan"></button></div>
+  </div>
+  <div id="offJoin" hidden style="margin-top:14px">
+    <div class="sub2" data-i="offJoinIn"></div>
+    <textarea id="offJoinIn" rows="3"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn sm" id="offMk" data-i="offMake"></button><button class="btn ghost sm" id="offScanJ" data-i="offScan"></button></div>
+    <div id="offReplyW" hidden style="margin-top:12px"><div class="sub2" data-i="offReply"></div>
+      <div id="offReplyQr" style="margin:8px 0;background:#fff;display:inline-block;padding:6px;border-radius:8px"></div>
+      <textarea id="offReply" rows="3" readonly></textarea></div>
+  </div>
+</div></div>
+<!-- preview modal -->
+<div class="modal" id="mView"><div class="sheet big">
+  <div class="row" style="justify-content:space-between;margin-bottom:12px"><b id="mvTitle" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><div class="row"><button class="btn ghost sm" id="mvPrev" hidden>◀</button><button class="btn ghost sm" id="mvNext" hidden>▶</button><button class="btn ghost sm" id="mvSend" hidden>📤</button><button class="btn sm" id="mvSave">⬇</button><button class="btn danger sm" id="mvDel" hidden>🗑</button><button class="btn ghost sm" id="mvClose">✕</button></div></div>
+  <div class="viewer" id="mvBody"></div>
+</div></div>
+<button class="fab" id="fab" aria-label="Add">＋</button>
+<input type="file" id="fmIn" multiple hidden>
+<input type="file" id="fmInDir" webkitdirectory hidden>
+<!-- folder picker (move / copy) -->
+<div class="modal" id="mPick"><div class="sheet">
+  <h3 id="pkT"></h3>
+  <div class="sub2" id="pkP" style="margin:6px 0 10px;direction:ltr"></div>
+  <div class="pklist" id="pkL"></div>
+  <div class="row" style="margin-top:14px;justify-content:space-between;flex-wrap:wrap">
+    <button class="btn ghost sm" id="pkNew" data-i="newFolder"></button>
+    <div class="row"><button class="btn ghost sm" id="pkNo" data-i="cancel"></button><button class="btn sm" id="pkOk"></button></div>
+  </div>
+</div></div>
+<!-- generic dialog (rename / confirm / info) -->
+<div class="modal" id="mDlg"><div class="sheet">
+  <h3 id="dT"></h3>
+  <img id="dImg" hidden alt="">
+  <div id="dList" class="dlist" hidden></div>
+  <div id="dM" class="sub2" style="white-space:pre-line;margin:8px 0;word-break:break-word"></div>
+  <input type="text" id="dI" hidden>
+  <div class="row" style="margin-top:18px;justify-content:flex-end"><button class="btn ghost" id="dNo" data-i="cancel"></button><button class="btn" id="dOk"></button></div>
+</div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const store={get(k,d){try{const v=localStorage.getItem('fs.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('fs.'+k,JSON.stringify(v))}catch(e){}}};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function defer(){let res,rej;const p=new Promise((a,b)=>{res=a;rej=b});p.res=res;p.rej=rej;p.catch(()=>{});return p}
+const fmt=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':n<1073741824?(n/1048576).toFixed(1)+' MB':(n/1073741824).toFixed(2)+' GB';
+const rid=()=>Math.random().toString(36).slice(2,10);
+function h53(s){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
+const vcode=(a,b)=>String(h53([a,b].sort().join('|'))%10000).padStart(4,'0');
+const fkey=(n,s,m)=>h53(n+'|'+s+'|'+m).toString(36);
+const ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const genCode=()=>{let s='';for(let i=0;i<6;i++)s+=ALPHA[Math.random()*ALPHA.length|0];return s};
+const CHUNK=64*1024, BLOCK=1024*1024, HIGH=4*1024*1024, LOW=1024*1024, WINDOW=4*1024*1024, ACKSTEP=512*1024;
+const dev=(u=>/Android/.test(u)?'Android':/Windows/.test(u)?'Windows PC':/iPhone|iPad/.test(u)?'iPhone':/Mac/.test(u)?'Mac':/Linux/.test(u)?'Linux':'Device')(navigator.userAgent);
+const DID=(()=>{let d=store.get('did');if(!d){d=crypto.randomUUID?crypto.randomUUID():rid()+rid()+rid();store.set('did',d)}return d})();
+const S=Object.assign({name:dev,lang:/^ur/i.test(navigator.language)?'ur':'en',theme:'',autosave:false,compress:false,vibe:true,verify:true,pack:true,limit:0,clip:false,pcsave:false,pcmove:true,quality:80,maxDim:2048,turn:{url:'',user:'',cred:''}},store.get('settings',{}));
+const saveS=()=>store.set('settings',S);
+
+/* ================= crc32 (verify + duplicate finder) ================= */
+const CRC_T=(()=>{const T=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;T[n]=c>>>0}return T})();
+function crc32(u,prev){let c=(prev===undefined?0:prev)^-1;for(let i=0;i<u.length;i++)c=CRC_T[(c^u[i])&255]^(c>>>8);return(c^-1)>>>0}
+async function crcOfBlob(b){let c;for(let o=0;o<b.size;o+=4194304)c=crc32(new Uint8Array(await b.slice(o,Math.min(o+4194304,b.size)).arrayBuffer()),c);return c===undefined?0:c}
+
+/* ================= i18n ================= */
+const I18N={
+en:{tabShare:'Share',tabFiles:'Files',tabHist:'History',tabSet:'Settings',thisDev:'This device',scanHint:'Scan the QR or type this code on the other device',copyLink:'Copy link',newCode:'New code',connTitle:'Connect to a device',connect:'Connect',noPeers:'No device connected yet.',myDevs:'My devices',noKnown:'No saved devices yet.',forget:'Forget',send:'Send',dropT:'Drop files here or tap to choose',dropS:'Any file type, any size · direct device to device',pickFiles:'Choose files',pickFolder:'Choose folder',sendTxt:'Send text',paste:'Paste clipboard',txtPh:'Send text / link / clipboard…',feed:'Transfers & chat',nothing:'Nothing yet.',online:'Online',conning:'Connecting…',recon:'Reconnecting…',sent:'Sent',recv:'Received',pause:'Pause',resume:'Resume',cancel:'Cancel',retry:'Retry',save:'Save',open:'Open',allow:'Allow',deny:'Deny',trust:'Always allow this device',wants:'wants to connect',verify:'Check that this code matches on both devices',waiting:'Waiting for approval…',denied:'Connection denied',connected:'Connected',connFirst:'Connect a device first',notFound:'Device not found — check the code',enter6:'Enter the 6-character code',selfCode:"That's this device",already:'Already connected',you:'You',copied:'Copied',linkCopied:'Link copied',cancelled:'Cancelled',lost:'Connection lost — resumes on reconnect',addFiles:'Add files',newFolder:'New folder',rename:'Rename',del:'Delete',sendSel:'Send',search:'Search…',name:'Name',size:'Size',date:'Date',used:'used',confirmDel:'Delete {n} item(s)?',libEmpty:'Empty. Received files appear here.',noSupport:'This browser cannot keep files inside the app, so received files are downloaded instead.',hist:'History',clearHist:'Clear history',noHist:'No history yet.',devName:'Device name',theme:'Theme',themeSys:'System',themeDark:'Dark',themeLight:'Light',autosave:'Also download received files to this device',compress:'Compress photos before sending',quality:'Quality',turnT:'Relay server (TURN) for strict networks',turnUrl:'TURN URL(s)',turnUser:'Username',turnCred:'Credential',saveRestart:'Save & restart',trustedT:'Trusted devices',noTrusted:'None',encNote:'All transfers are end-to-end encrypted (WebRTC DTLS).',folderName:'Folder name',notSupported:'Not supported in this browser',shared:'Shared files ready — connect a device to send',folder:'Folder',trustedBadge:'trusted'},
+ur:{tabShare:'شیئر',tabFiles:'فائلیں',tabHist:'ہسٹری',tabSet:'سیٹنگز',thisDev:'یہ ڈیوائس',scanHint:'دوسری ڈیوائس پر QR اسکین کریں یا یہ کوڈ لکھیں',copyLink:'لنک کاپی کریں',newCode:'نیا کوڈ',connTitle:'ڈیوائس سے جڑیں',connect:'جڑیں',noPeers:'ابھی کوئی ڈیوائس نہیں جڑی۔',myDevs:'میری ڈیوائسز',noKnown:'ابھی کوئی محفوظ ڈیوائس نہیں۔',forget:'بھول جائیں',send:'بھیجیں',dropT:'فائلیں یہاں ڈالیں یا چننے کے لیے ٹیپ کریں',dropS:'کوئی بھی فائل، کوئی بھی سائز · سیدھا ڈیوائس سے ڈیوائس',pickFiles:'فائلیں چنیں',pickFolder:'فولڈر چنیں',sendTxt:'ٹیکسٹ بھیجیں',paste:'کلپ بورڈ پیسٹ کریں',txtPh:'ٹیکسٹ / لنک بھیجیں…',feed:'ٹرانسفر اور چیٹ',nothing:'ابھی کچھ نہیں۔',online:'آن لائن',conning:'جڑ رہا ہے…',recon:'دوبارہ جڑ رہا ہے…',sent:'بھیج دی',recv:'مل گئی',pause:'روکیں',resume:'جاری رکھیں',cancel:'منسوخ',retry:'دوبارہ',save:'محفوظ کریں',open:'کھولیں',allow:'اجازت دیں',deny:'انکار',trust:'اس ڈیوائس کو ہمیشہ اجازت دیں',wants:'جڑنا چاہتی ہے',verify:'دیکھ لیں کہ یہ کوڈ دونوں ڈیوائسز پر ایک جیسا ہے',waiting:'منظوری کا انتظار…',denied:'کنکشن مسترد',connected:'جڑ گئی',connFirst:'پہلے کوئی ڈیوائس جوڑیں',notFound:'ڈیوائس نہیں ملی — کوڈ چیک کریں',enter6:'6 حرفی کوڈ لکھیں',selfCode:'یہ تو یہی ڈیوائس ہے',already:'پہلے سے جڑی ہوئی ہے',you:'آپ',copied:'کاپی ہو گیا',linkCopied:'لنک کاپی ہو گیا',cancelled:'منسوخ',lost:'کنکشن ٹوٹ گیا — دوبارہ جڑنے پر جاری ہوگا',addFiles:'فائلیں شامل کریں',newFolder:'نیا فولڈر',rename:'نام بدلیں',del:'حذف کریں',sendSel:'بھیجیں',search:'تلاش…',name:'نام',size:'سائز',date:'تاریخ',used:'استعمال',confirmDel:'{n} آئٹم حذف کریں؟',libEmpty:'خالی ہے۔ موصول فائلیں یہاں نظر آئیں گی۔',noSupport:'یہ براؤزر فائلیں ایپ کے اندر محفوظ نہیں رکھ سکتا، اس لیے موصول فائلیں ڈاؤن لوڈ ہوں گی۔',hist:'ہسٹری',clearHist:'ہسٹری صاف کریں',noHist:'ابھی کوئی ہسٹری نہیں۔',devName:'ڈیوائس کا نام',theme:'تھیم',themeSys:'سسٹم',themeDark:'ڈارک',themeLight:'لائٹ',autosave:'موصول فائلیں اس ڈیوائس میں ڈاؤن لوڈ بھی کریں',compress:'بھیجنے سے پہلے تصاویر چھوٹی کریں',quality:'کوالٹی',turnT:'ریلے سرور (TURN) — سخت نیٹ ورک کے لیے',turnUrl:'TURN URL',turnUser:'یوزر نیم',turnCred:'پاس ورڈ',saveRestart:'محفوظ کریں اور ری اسٹارٹ',trustedT:'بھروسے مند ڈیوائسز',noTrusted:'کوئی نہیں',encNote:'تمام ٹرانسفر اینڈ ٹو اینڈ انکرپٹڈ ہیں (WebRTC DTLS)۔',folderName:'فولڈر کا نام',notSupported:'اس براؤزر میں دستیاب نہیں',shared:'شیئر کی گئی فائلیں تیار ہیں — بھیجنے کے لیے ڈیوائس جوڑیں',folder:'فولڈر',trustedBadge:'بھروسے مند'}
+};
+Object.assign(I18N.en,{cImg:'Images',cVid:'Videos',cAud:'Audio',cDoc:'Documents',cArc:'Archives',cApk:'Apps (APK)',catT:'Categories',recent:'Recent files',allFiles:'All files',folders:'Folders',items:'{n} items',storageT:'Storage',inApp:'in FileShare',free:'free',searchPh:'Search files',selected:'{n} selected',selAll:'Select all',moveT:'Move to…',copyT:'Copy to…',moveHere:'Move here',copyHere:'Copy here',info:'Details',download:'Download',sortBy:'Sort by',ok:'OK',noResults:'No files found',emptyFolder:'This folder is empty',exists:'A file with that name already exists',ftype:'Type',fmod:'Modified',fpath:'Location',addFolder:'Add folder',noFiles:'Select files to download',delNote:'Items go to the Recycle bin and stay there for 30 days.',checkHint:'Tap a picture or ▶ to check each file before deleting.',vibe:'Vibrate when a transfer finishes',libFail:'Connection library could not load (check internet). The file manager still works.'});
+Object.assign(I18N.ur,{cImg:'تصاویر',cVid:'ویڈیوز',cAud:'آڈیو',cDoc:'دستاویزات',cArc:'آرکائیوز',cApk:'ایپس (APK)',catT:'زمرے',recent:'حالیہ فائلیں',allFiles:'تمام فائلیں',folders:'فولڈرز',items:'{n} آئٹم',storageT:'اسٹوریج',inApp:'FileShare میں',free:'خالی',searchPh:'فائلیں تلاش کریں',selected:'{n} منتخب',selAll:'سب منتخب کریں',moveT:'منتقل کریں…',copyT:'کاپی کریں…',moveHere:'یہاں منتقل کریں',copyHere:'یہاں کاپی کریں',info:'تفصیلات',download:'ڈاؤن لوڈ',sortBy:'ترتیب',ok:'ٹھیک ہے',noResults:'کوئی فائل نہیں ملی',emptyFolder:'یہ فولڈر خالی ہے',exists:'اس نام کی فائل پہلے سے موجود ہے',ftype:'قسم',fmod:'ترمیم',fpath:'مقام',addFolder:'فولڈر شامل کریں',noFiles:'ڈاؤن لوڈ کے لیے فائلیں چنیں',delNote:'فائلیں ری سائیکل بن میں 30 دن رہتی ہیں۔',checkHint:'حذف کرنے سے پہلے تصویر یا ▶ دبا کر ہر فائل دیکھ لیں۔',vibe:'ٹرانسفر مکمل ہونے پر وائبریٹ کریں',libFail:'کنکشن لائبریری لوڈ نہیں ہوئی (انٹرنیٹ چیک کریں)۔ فائل مینیجر پھر بھی چلتا ہے۔'});
+Object.assign(I18N.en,{pcMove:'After copying to the PC folder, remove the app copy (saves space — good for big transfers)',pcMoved:'moved to PC folder',syncStart:'Sync with connected device',syncStop:'Stop syncing',syncNow:'Sync now',syncTag:'sync',syncTop:'Only top-level folders can be synced',syncOffered:'Sync request sent',syncStopped:'Sync stopped',syncOn:'Syncing “{f}”',syncAsk:'{name} wants to keep the folder “{f}” in sync. Only NEW files are copied (both ways). Nothing is ever deleted or overwritten. Allow?',repT:'Transfer report',repSent:'Sent',repRecv:'Received',repFail:'Failed',repAvg:'Avg speed',repFiles:'{n} files',exportCsv:'Export CSV',histFailed:'✕ failed',peerLow:'{name}: not enough free space (needs {need}, has {free}) — not sent',dlScan:'Scan with a phone camera, or copy the link.',shareLink:'Share download link',dlMsg:'Anyone with this link can download “{name}” once, within 1 hour, in any browser — no app install. This app must stay open on this device.',dlGetting:'Downloading the shared file…',offBtn:'📡 Connect without internet',offT:'Connect without internet',offHint:'Both devices on the same Wi-Fi, or one phone’s hotspot. No internet needed. Open this app on both.',offStart:'Start here — show my code',offJoin:'Join — I have a code',offCode:'Show this code (or QR) to the other device',offPaste:'Paste the other device’s reply code',offFinish:'Connect',offJoinIn:'Paste the code from the first device',offMake:'Create reply code',offReply:'Show this reply code to the first device',offScan:'📷 Scan',offBad:'Invalid code',offDone:'Connected offline',noSpaceRx:'Not enough free space: need {need}, only {free} free. Free some space and ask the sender to retry.',noSpaceTx:'Receiver has no space: needs {need}, only {free} free',rxFull:'Receiver storage is full — what arrived is kept. Free space, then tap Retry to continue.',fullRx:'Storage full — the part received so far is kept. Free some space, then ask the sender to retry; it continues from here.',cPart:'Unfinished downloads',partNote:'Half-received files kept so they can resume. Delete them to free space.',delParts:'Delete unfinished downloads',partsDeleted:'Unfinished downloads deleted',browse:'Browse shared folders on this device',shareFolder:'Share folder',unshare:'Stop sharing',sharedTag:'shared',nothingShared:'Nothing shared here. On that device: Files → ⋮ on a folder → Share folder.',getFile:'Get',requested:'Requested — it will arrive in Transfers',remoteErr:'Could not load',sClip:'Sync clipboard with connected devices (while this app is open)',clipGot:'Clipboard updated from other device',clipGotFeed:'Clipboard text received (see Transfers)',pcT:'Save to a folder on this PC',pcPick:'Choose folder',pcAuto:'Also copy received files into that folder',pcSet:'PC folder set',pcSaved:'Copied to PC folder',pcAllow:'Tap Save on the item to allow PC folder access',pcNone:'not set',ct_lan:'⚡ Same network — fastest',ct_direct:'🌐 Direct connection',ct_relay:'🐢 Via relay — slower',pauseAll:'Pause all',resumeAll:'Resume all',clearDone:'Clear finished',camPhoto:'📷 Photo',camVideo:'🎥 Video',verified:'· verified',verifyFail:'Checksum mismatch — please resend',packing:'Packing small files into one…',nFiles:'{n} files',sVerify:'Verify files I send (checksum)',sPack:'Pack many small files into one transfer',sLimit:'Speed limit in MB/s (0 = unlimited)',cleanT:'Clean',cleanSub:'Duplicates, large, old',cleanNote:'Find files you can safely remove. Nothing is deleted until you confirm, and deleted files go to the Recycle bin.',cDups:'Duplicate files',cLarge:'Large files (25 MB+)',cOld:'Old files (60+ days)',keep:'✓ keep',dupCopy:'≡ copy',dupInfo:'{n} copies · {s} can be freed',none:'Nothing found',toolsT:'Tools',binT:'Recycle bin',binNote:'Deleted items stay here for 30 days, then are removed automatically.',binEmpty:'The Recycle bin is empty',emptyBin:'Empty bin',emptyBinHint:'empty it to free space',restore:'Restore',restored:'Restored',delForever:'Delete forever',delNote2:'This permanently removes the file.',movedBin:'Moved to Recycle bin',priv:'Private',locked:'PIN locked',setup:'Set up',setPin:'Create a PIN',pinHint:'4 or more digits. Files are hidden and locked inside this app (not encrypted on disk). If you forget the PIN you must reset the Private folder.',confirmPin:'Confirm PIN',enterPin:'Enter PIN',pinBad:'PINs do not match',pinWrong:'Wrong PIN',pinShort:'PIN must be 4+ digits',toPriv:'Move to Private',movedPriv:'Moved to Private',pinReset:'Reset PIN (deletes Private files)',pinResetNote:'This removes the PIN and permanently deletes everything in the Private folder.',done:'Done',justNow:'just now',});
+Object.assign(I18N.ur,{pcMove:'پی سی فولڈر میں کاپی کے بعد ایپ والی کاپی ہٹا دیں (جگہ بچتی ہے — بڑے ٹرانسفر کے لیے بہتر)',pcMoved:'پی سی فولڈر میں منتقل',syncStart:'جڑی ڈیوائس سے سنک کریں',syncStop:'سنک بند کریں',syncNow:'ابھی سنک کریں',syncTag:'سنک',syncTop:'صرف اوپری سطح کے فولڈر سنک ہو سکتے ہیں',syncOffered:'سنک کی درخواست بھیج دی',syncStopped:'سنک بند',syncOn:'“{f}” سنک ہو رہا ہے',syncAsk:'{name} فولڈر “{f}” کو سنک رکھنا چاہتی ہے۔ صرف نئی فائلیں کاپی ہوں گی (دونوں طرف)۔ کچھ حذف یا اوور رائٹ نہیں ہوگا۔ اجازت دیں؟',repT:'ٹرانسفر رپورٹ',repSent:'بھیجی',repRecv:'ملی',repFail:'ناکام',repAvg:'اوسط رفتار',repFiles:'{n} فائلیں',exportCsv:'CSV ایکسپورٹ',histFailed:'✕ ناکام',peerLow:'{name}: جگہ کافی نہیں ({need} چاہیے، {free} خالی) — نہیں بھیجا',dlScan:'فون کیمرے سے اسکین کریں، یا لنک کاپی کریں۔',shareLink:'ڈاؤن لوڈ لنک شیئر کریں',dlMsg:'اس لنک والا کوئی بھی “{name}” ایک بار، 1 گھنٹے کے اندر، کسی بھی براؤزر میں ڈاؤن لوڈ کر سکتا ہے — ایپ انسٹال کیے بغیر۔ اس ڈیوائس پر یہ ایپ کھلی رہنی چاہیے۔',dlGetting:'شیئر کی گئی فائل ڈاؤن لوڈ ہو رہی ہے…',offBtn:'📡 بغیر انٹرنیٹ جڑیں',offT:'بغیر انٹرنیٹ جڑیں',offHint:'دونوں ڈیوائسز ایک ہی وائی فائی پر ہوں، یا ایک فون کا ہاٹ اسپاٹ۔ انٹرنیٹ نہیں چاہیے۔ دونوں پر یہ ایپ کھولیں۔',offStart:'یہاں سے شروع — میرا کوڈ دکھائیں',offJoin:'جڑیں — میرے پاس کوڈ ہے',offCode:'یہ کوڈ (یا QR) دوسری ڈیوائس کو دکھائیں',offPaste:'دوسری ڈیوائس کا جوابی کوڈ پیسٹ کریں',offFinish:'جڑیں',offJoinIn:'پہلی ڈیوائس کا کوڈ پیسٹ کریں',offMake:'جوابی کوڈ بنائیں',offReply:'یہ جوابی کوڈ پہلی ڈیوائس کو دکھائیں',offScan:'📷 اسکین',offBad:'غلط کوڈ',offDone:'آف لائن جڑ گئی',noSpaceRx:'جگہ کافی نہیں: {need} چاہیے، صرف {free} خالی ہے۔ جگہ بنائیں اور بھیجنے والے سے دوبارہ کوشش کروائیں۔',noSpaceTx:'وصول کنندہ کے پاس جگہ نہیں: {need} چاہیے، صرف {free} خالی',rxFull:'وصول کنندہ کی اسٹوریج بھر گئی — جو آ چکا وہ محفوظ ہے۔ جگہ بنائیں پھر دوبارہ کوشش دبائیں۔',fullRx:'اسٹوریج بھر گئی — اب تک آیا حصہ محفوظ ہے۔ جگہ بنائیں اور بھیجنے والے سے دوبارہ کروائیں؛ یہیں سے آگے چلے گا۔',cPart:'ادھورے ڈاؤن لوڈ',partNote:'آدھی آئی ہوئی فائلیں جو دوبارہ جاری ہو سکتی ہیں۔ جگہ خالی کرنے کے لیے حذف کریں۔',delParts:'ادھورے ڈاؤن لوڈ حذف کریں',partsDeleted:'ادھورے ڈاؤن لوڈ حذف ہو گئے',browse:'اس ڈیوائس کے شیئر کردہ فولڈر دیکھیں',shareFolder:'فولڈر شیئر کریں',unshare:'شیئرنگ بند کریں',sharedTag:'شیئر',nothingShared:'یہاں کچھ شیئر نہیں۔ اُس ڈیوائس پر: فائلیں ← فولڈر کے ⋮ ← فولڈر شیئر کریں۔',getFile:'منگوائیں',requested:'درخواست بھیج دی — ٹرانسفرز میں آ جائے گی',remoteErr:'لوڈ نہیں ہو سکا',sClip:'جڑی ڈیوائسز کے ساتھ کلپ بورڈ سنک کریں (ایپ کھلی ہو تو)',clipGot:'دوسری ڈیوائس سے کلپ بورڈ اپڈیٹ ہو گیا',clipGotFeed:'کلپ بورڈ ٹیکسٹ ملا (ٹرانسفرز میں دیکھیں)',pcT:'اس پی سی کے فولڈر میں محفوظ کریں',pcPick:'فولڈر چنیں',pcAuto:'موصول فائلیں اُس فولڈر میں بھی کاپی کریں',pcSet:'پی سی فولڈر سیٹ ہو گیا',pcSaved:'پی سی فولڈر میں کاپی ہو گئی',pcAllow:'پی سی فولڈر کی اجازت کے لیے آئٹم پر محفوظ کریں دبائیں',pcNone:'سیٹ نہیں',ct_lan:'⚡ ایک ہی نیٹ ورک — سب سے تیز',ct_direct:'🌐 سیدھا کنکشن',ct_relay:'🐢 ریلے کے ذریعے — سست',pauseAll:'سب روکیں',resumeAll:'سب جاری کریں',clearDone:'مکمل صاف کریں',camPhoto:'📷 تصویر',camVideo:'🎥 ویڈیو',verified:'· تصدیق شدہ',verifyFail:'چیک سم میل نہیں کھایا — دوبارہ بھیجیں',packing:'چھوٹی فائلوں کو ایک میں پیک کیا جا رہا ہے…',nFiles:'{n} فائلیں',sVerify:'بھیجی گئی فائلوں کی تصدیق (چیک سم)',sPack:'بہت سی چھوٹی فائلیں ایک ٹرانسفر میں پیک کریں',sLimit:'اسپیڈ لمٹ MB/s میں (0 = بغیر حد)',cleanT:'صفائی',cleanSub:'ڈپلیکیٹ، بڑی، پرانی',cleanNote:'ایسی فائلیں ڈھونڈیں جو بے فکری سے ہٹائی جا سکتی ہیں۔ آپ کی تصدیق تک کچھ حذف نہیں ہوتا، اور حذف شدہ فائلیں ری سائیکل بن میں جاتی ہیں۔',cDups:'ڈپلیکیٹ فائلیں',cLarge:'بڑی فائلیں (25 MB+)',cOld:'پرانی فائلیں (60+ دن)',keep:'✓ رکھیں',dupCopy:'≡ نقل',dupInfo:'{n} نقلیں · {s} خالی ہو سکتے ہیں',none:'کچھ نہیں ملا',toolsT:'ٹولز',binT:'ری سائیکل بن',binNote:'حذف شدہ فائلیں 30 دن یہاں رہتی ہیں، پھر خود ہٹ جاتی ہیں۔',binEmpty:'ری سائیکل بن خالی ہے',emptyBin:'بن خالی کریں',emptyBinHint:'جگہ بنانے کے لیے خالی کریں',restore:'واپس لائیں',restored:'واپس آ گئی',delForever:'ہمیشہ کے لیے حذف',delNote2:'یہ فائل مستقل ہٹ جائے گی۔',movedBin:'ری سائیکل بن میں چلی گئی',priv:'پرائیویٹ',locked:'پن سے بند',setup:'سیٹ اپ',setPin:'پن بنائیں',pinHint:'4 یا زیادہ ہندسے۔ فائلیں اس ایپ کے اندر چھپی اور بند رہتی ہیں (ڈسک پر انکرپٹ نہیں)۔ پن بھول جائیں تو پرائیویٹ فولڈر ری سیٹ کرنا ہوگا۔',confirmPin:'پن دوبارہ لکھیں',enterPin:'پن لکھیں',pinBad:'پن میل نہیں کھایا',pinWrong:'غلط پن',pinShort:'پن کم از کم 4 ہندسوں کا ہو',toPriv:'پرائیویٹ میں منتقل',movedPriv:'پرائیویٹ میں چلی گئی',pinReset:'پن ری سیٹ (پرائیویٹ فائلیں حذف)',pinResetNote:'یہ پن ہٹا دے گا اور پرائیویٹ فولڈر کی ہر چیز مستقل حذف کر دے گا۔',done:'ہو گیا',justNow:'ابھی',});
+const t=k=>(I18N[S.lang]&&I18N[S.lang][k])||I18N.en[k]||k;
+function applyLang(){
+  document.documentElement.lang=S.lang;document.documentElement.dir=S.lang==='ur'?'rtl':'ltr';
+  $$('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));
+  $$('[data-ph]').forEach(e=>e.placeholder=t(e.dataset.ph));
+  $('#langBtn').textContent=S.lang==='ur'?'EN':'اردو';
+}
+function applyTheme(){
+  const light=S.theme?S.theme==='light':matchMedia('(prefers-color-scheme: light)').matches;
+  document.documentElement.classList.toggle('light',light);
+  $('meta[name=theme-color]').content=light?'#f3f5fb':'#0b0f1a';
+}
+function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('show'),2600)}
+function status(m,c){$('#stxt').textContent=m;$('#sdot').className='dot '+(c||'')}
+
+/* ================= OPFS library ================= */
+const OPFS=!!(navigator.storage&&navigator.storage.getDirectory&&window.FileSystemFileHandle&&FileSystemFileHandle.prototype.createWritable);
+let ROOT=null;
+async function root(){if(!ROOT){const r=await navigator.storage.getDirectory();ROOT=await r.getDirectoryHandle('library',{create:true})}return ROOT}
+const clean=s=>s.replace(/[\\:*?"<>|\x00-\x1f]/g,'_').trim()||'_';
+const splitPath=p=>{const a=p.split('/').filter(x=>x&&x!=='.'&&x!=='..').map(clean);if(a[0]==='.trash'||a[0]==='.private')a[0]='_'+a[0];return a};
+async function dirAt(parts,create){let d=await root();for(const p of parts)d=await d.getDirectoryHandle(p,{create:!!create});return d}
+async function exists(dir,name){try{await dir.getFileHandle(name);return true}catch(e){}try{await dir.getDirectoryHandle(name);return true}catch(e){}return false}
+async function uniqueName(dir,name){
+  if(!(await exists(dir,name)))return name;
+  const i=name.lastIndexOf('.'),b=i>0?name.slice(0,i):name,x=i>0?name.slice(i):'';
+  for(let n=1;;n++){const c=b+' ('+n+')'+x;if(!(await exists(dir,c)))return c}
+}
+async function finalize(dir,partName,finalName){
+  const fh=await dir.getFileHandle(partName);
+  if(fh.move){try{await fh.move(finalName);return}catch(e){}}
+  const f=await fh.getFile(),nh=await dir.getFileHandle(finalName,{create:true}),w=await nh.createWritable();
+  await f.stream().pipeTo(w);await dir.removeEntry(partName);
+}
+async function libFile(path){const parts=splitPath(path),name=parts.pop();const d=await dirAt(parts,false);return (await d.getFileHandle(name)).getFile()}
+async function* walk(dir,prefix){for await(const [n,h] of dir.entries()){if(h.kind==='file'){if(n.endsWith('.part'))continue;yield{file:await h.getFile(),name:prefix+n}}else yield*walk(h,prefix+n+'/')}}
+const MIME={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',svg:'image/svg+xml',bmp:'image/bmp',mp4:'video/mp4',webm:'video/webm',mkv:'video/x-matroska',mov:'video/quicktime',mp3:'audio/mpeg',wav:'audio/wav',ogg:'audio/ogg',m4a:'audio/mp4',pdf:'application/pdf',txt:'text/plain',md:'text/plain',json:'application/json',csv:'text/plain',log:'text/plain',js:'text/plain',html:'text/plain',css:'text/plain',xml:'text/plain'};
+const ext=n=>(n.split('.').pop()||'').toLowerCase();
+const mimeOf=(n,t0)=>t0||MIME[ext(n)]||'';
+function iconOf(n,kind){if(kind==='dir')return'📁';const m=mimeOf(n),e=ext(n);if(m.startsWith('image/'))return'🖼️';if(m.startsWith('video/'))return'🎬';if(m.startsWith('audio/'))return'🎵';if(m==='application/pdf')return'📕';if(['zip','rar','7z','tar','gz'].includes(e))return'🗜️';if(e==='apk')return'📱';if(['doc','docx','odt','rtf'].includes(e))return'📝';if(['xls','xlsx','csv'].includes(e))return'📊';if(['ppt','pptx'].includes(e))return'📽️';if(m.startsWith('text/')||m==='application/json')return'📄';return'📦'}
+function saveFile(file,name){const u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=clean(name);document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}
+
+/* ================= known devices / history ================= */
+const known=()=>store.get('known',[]);
+function saveKnown(o){if(!o.id)return;const k=known();const i=k.findIndex(x=>x.id===o.id);if(i>=0)k[i]=Object.assign(k[i],o);else k.push(Object.assign({trusted:false},o));store.set('known',k);renderKnown();renderTrusted()}
+function histAdd(o){const h=store.get('hist',[]);h.unshift(Object.assign({ts:Date.now()},o));store.set('hist',h.slice(0,300));histRender()}
+
+/* ================= peer / connections ================= */
+const conns=new Map(), ITEMS=new Map();
+let peer,myCode,wake,retries=0,askQ=Promise.resolve(),PENDING=[];
+function ice(){
+  const s=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
+  const T=S.turn;
+  if(T&&T.url){s.push({urls:T.url.split(',').map(x=>x.trim()).filter(Boolean),username:T.user,credential:T.cred})}
+  else{ // public best-effort relay; replace with your own in Settings for reliability
+    ['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turns:openrelay.metered.ca:443?transport=tcp'].forEach(u=>s.push({urls:u,username:'openrelayproject',credential:'openrelayproject'}));
+  }
+  return s;
+}
+function start(code){
+  myCode=code||store.get('code')||genCode();status(t('conning'));
+  peer=new Peer('fshare-'+myCode,{config:{iceServers:ice()},debug:0});
+  peer.on('open',()=>{
+    retries=0;store.set('code',myCode);$('#code').textContent=myCode;drawQR();status(t('online'),'on');
+    if(!start.done){start.done=1;const c=new URLSearchParams(location.search).get('c');if(c)connect(c)}
+  });
+  peer.on('connection',c=>setup(c,true));
+  peer.on('disconnected',()=>{status(t('recon'),'err');try{peer.reconnect()}catch(e){}});
+  peer.on('error',e=>{
+    if(e.type==='unavailable-id'){peer.destroy();if(retries++<3)setTimeout(()=>start(myCode),2500);else start(genCode());return}
+    if(e.type==='peer-unavailable'){toast(t('notFound'));return}
+    status('⚠ '+e.type,'err');
+  });
+}
+const link=()=>location.origin+location.pathname+'?c='+myCode;
+function drawQR(){const q=$('#qr');q.innerHTML='';if(!window.QRCode)return;new QRCode(q,{text:link(),width:112,height:112,colorDark:'#0b0f1a',colorLight:'#ffffff'})}
+function connect(code){
+  code=(code||'').trim().toUpperCase();
+  if(code.length!==6)return toast(t('enter6'));
+  if(code===myCode)return toast(t('selfCode'));
+  if(conns.has('fshare-'+code))return toast(t('already'));
+  if(!peer||!peer.open)return toast(t('conning'));
+  setup(peer.connect('fshare-'+code,{reliable:true,serialization:'raw'}),false);toast(t('conning'));
+}
+function setup(c,incoming){
+  c.incoming=incoming;c.ok=false;
+  c.on('open',()=>{conns.set(c.peer,c);c.send(JSON.stringify({t:'hello',name:S.name,id:DID,dl:(!c.incoming&&DLTOK)||undefined}));renderPeers();let n=0;const iv=setInterval(()=>{if(c._gone||c.ctype||n++>20){clearInterval(iv);return}connType(c)},1500)});
+  c.on('data',d=>onData(c,d));
+  const gone=()=>{if(c._gone)return;c._gone=1;onGone(c)};
+  c.on('close',gone);c.on('error',gone);
+}
+async function onGone(c){
+  const r=c._rx;c._rx=null;
+  if(r){try{await r.q}catch(e){}try{if(r.w)await r.w.close()}catch(e){}fail(r.item,t('lost'))}
+  ITEMS.forEach(it=>{if(it.peerId===c.peer&&it.dir==='out'&&it.state!=='done'&&it.state!=='fail'){it.readyP&&it.readyP.rej(new Error('lost'));it.doneP&&it.doneP.rej(new Error('lost'))}});
+  if(conns.get(c.peer)===c)conns.delete(c.peer);
+  renderPeers();renderKnown();
+}
+function grant(c,trust){
+  c.ok=true;c.send(JSON.stringify({t:'accept'}));
+  if(!c.offline)saveKnown({id:c.did,name:c.label,code:c.peer.slice(7),trusted:!!trust||undefined});
+  onReady(c);
+}
+function ask(c){
+  askQ=askQ.then(()=>new Promise(res=>{
+    if(!c.open){res();return}
+    $('#askT').textContent=(c.label||'Device')+' '+t('wants');$('#askV').textContent=c.vcode;$('#askTrust').checked=false;$('#mAsk').classList.add('on');
+    const done=()=>{$('#mAsk').classList.remove('on');res()};
+    $('#askAllow').onclick=()=>{grant(c,$('#askTrust').checked);done()};
+    $('#askDeny').onclick=()=>{try{c.send(JSON.stringify({t:'deny'}))}catch(e){}setTimeout(()=>c.close(),200);done()};
+  }));
+}
+async function freeNow(){try{const e=await navigator.storage.estimate();return e&&e.quota?Math.max(0,e.quota-e.usage):undefined}catch(x){}}
+async function sendInfo(c){const free=await freeNow();try{c.send(JSON.stringify({t:'info',free,stream:(S.pcsave&&PCH&&S.pcmove!==false)?1:undefined}))}catch(x){}}
+function onReady(c){
+  sendInfo(c);setTimeout(()=>synSend(c),600);renderPeers();renderKnown();toast(t('connected'));keepAwake();
+  ITEMS.forEach(it=>{if(it.dir==='out'&&it.state==='fail'&&!it.cancelled&&it.peerId===c.peer&&it.file)enqueue(c,it)});
+  flushPending();
+}
+async function keepAwake(){try{if('wakeLock'in navigator)wake=await navigator.wakeLock.request('screen')}catch(e){}}
+function renderPeers(){
+  const box=$('#peers');box.innerHTML='';
+  if(!conns.size){box.innerHTML='<div class="empty">'+t('noPeers')+'</div>';return}
+  for(const c of conns.values()){
+    if(c.limited)continue;
+    const d=document.createElement('div');d.className='peer';
+    const l=document.createElement('div');l.className='row';l.style.minWidth='0';
+    const dot=document.createElement('span');dot.className='dot '+(c.ok?'on':'wait');l.append(dot);
+    const nm=document.createElement('div');nm.className='nm2';
+    const b=document.createElement('b');b.textContent=(c.label||'Device')+' · '+c.peer.slice(7);nm.append(b);
+    if(!c.ok){const s=document.createElement('div');s.className='sub2';s.textContent=t('waiting')+(c.vcode?'  #'+c.vcode:'');nm.append(s)}
+    else if(c.ctype||c.free!==undefined){const s=document.createElement('div');s.className='sub2';s.textContent=[c.ctype?t('ct_'+c.ctype):'',c.free!==undefined?'💾 '+fmt(c.free)+' '+t('free'):''].filter(Boolean).join(' · ');nm.append(s)}
+    l.append(nm);d.append(l);
+    const r=document.createElement('div');r.className='row';
+    if(c.ok){const ck=document.createElement('input');ck.type='checkbox';ck.checked=c.sel!==false;ck.style.width='auto';ck.onchange=()=>{c.sel=ck.checked};r.append(ck)}
+    if(c.ok){const br=document.createElement('button');br.className='btn ghost sm';br.textContent='📂';br.title=t('browse');br.onclick=()=>openRemote(c);r.append(br)}
+    const x=document.createElement('button');x.className='btn ghost sm';x.textContent='✕';x.onclick=()=>c.close();r.append(x);d.append(r);box.append(d);
+  }
+}
+function renderKnown(){
+  const box=$('#known');box.innerHTML='';const k=known();
+  if(!k.length){box.innerHTML='<div class="empty">'+t('noKnown')+'</div>';return}
+  k.forEach(o=>{
+    const d=document.createElement('div');d.className='peer';
+    const nm=document.createElement('div');nm.className='nm2';
+    nm.innerHTML='<b></b><div class="sub2"></div>';nm.querySelector('b').textContent=o.name||'Device';nm.querySelector('.sub2').textContent=o.code+(o.trusted?' · '+t('trustedBadge'):'');
+    const r=document.createElement('div');r.className='row';
+    const on=conns.has('fshare-'+o.code);
+    if(!on){const b=document.createElement('button');b.className='btn sm';b.textContent=t('connect');b.onclick=()=>connect(o.code);r.append(b)}
+    const x=document.createElement('button');x.className='btn ghost sm';x.textContent='✕';x.title=t('forget');x.onclick=()=>{store.set('known',known().filter(z=>z.id!==o.id));renderKnown();renderTrusted()};r.append(x);
+    d.append(nm,r);box.append(d);
+  });
+}
+function renderTrusted(){
+  const box=$('#trustList');box.innerHTML='';const k=known().filter(x=>x.trusted);
+  if(!k.length){box.innerHTML='<div class="empty">'+t('noTrusted')+'</div>';return}
+  k.forEach(o=>{const d=document.createElement('div');d.className='kv';const s=document.createElement('span');s.textContent=(o.name||'Device')+' · '+o.code;const b=document.createElement('button');b.className='btn ghost sm';b.textContent='✕';b.onclick=()=>{saveKnown({id:o.id,trusted:false});renderTrusted()};d.append(s,b);box.append(d)});
+}
+
+/* ================= messages ================= */
+function onData(c,d){
+  if(typeof d==='string'){let m;try{m=JSON.parse(d)}catch(e){return}onMsg(c,m)}
+  else if(c.ok)onChunk(c,d);
+}
+function onMsg(c,m){
+  if(m.t==='hello'){
+    c.label=m.name;c.did=m.id;c.vcode=vcode(DID,m.id);
+    if(c.incoming&&!c.ok&&m.dl&&!c.offline&&dlValid(m.dl)){c.limited=m.dl;c.ok=true;c.send(JSON.stringify({t:'accept'}));dlSend(c,m.dl);renderPeers();return}
+    if(c.incoming&&!c.ok){const k=known().find(x=>x.id===m.id&&x.trusted);if(c.offline)grant(c,false);else if(k)grant(c,true);else ask(c)}
+    renderPeers();return;
+  }
+  if(m.t==='accept'){if(!c.incoming&&!c.ok){c.ok=true;if(!c.offline)saveKnown({id:c.did,name:c.label,code:c.peer.slice(7)});onReady(c)}return}
+  if(m.t==='deny'){toast(t('denied'));c.close();return}
+  if(!c.ok)return;
+  if(c.limited&&['meta','text','clip','ls','get','end'].includes(m.t))return;
+  const it=ITEMS.get(m.id);
+  switch(m.t){
+    case'info':c.free=m.free;c.stream=!!m.stream;renderPeers();break;
+    case'syn':onSyn(c,m);break;
+    case'synreq':onSynReq(c,m);break;
+    case'synoffer':onSynOffer(c,m);break;
+    case'synok':if(synOkName(m.folder)){synAddPair(c,m.folder);toast(t('syncOn').replace('{f}',m.folder));synSend(c)}break;
+    case'synstop':if(synFor(c,m.folder)){synDelPair(c,m.folder);toast(t('syncStopped'))}break;
+    case'ls':onLs(c,m);break;
+    case'lsr':{const f=REMP.get(m.id);if(f){REMP.delete(m.id);f(m)}break}
+    case'get':onGet(c,m);break;
+    case'clip':onClip(c,m);break;
+    case'text':addText(m.text,c.label||'Device','in');histAdd({n:m.text.slice(0,80),s:0,d:'in',p:c.label,x:1});break;
+    case'meta':onMeta(c,m);break;
+    case'end':onEnd(c,m);break;
+    case'ready':it&&it.readyP&&it.readyP.res(m);break;
+    case'reject':it&&it.readyP&&it.readyP.rej(new Error(m.why==='space'?t('noSpaceTx').replace('{need}',fmt(m.need||0)).replace('{free}',fmt(m.free||0)):(m.why||'rejected')));break;
+    case'full':if(it){it.stopFull=true;it.readyP&&it.readyP.rej(new Error('rxfull'));it.doneP&&it.doneP.rej(new Error('rxfull'))}break;
+    case'ack':if(it)it.acked=m.n;break;
+    case'done':it&&it.doneP&&it.doneP.res(m);break;
+    case'ctl':onCtl(c,m,it);break;
+  }
+}
+function onCtl(c,m,it){
+  if(!it)return;
+  if(m.op==='pause'){it.paused=true;setState(it,'paused')}
+  else if(m.op==='resume'){it.paused=false;setState(it,'run')}
+  else if(m.op==='cancel'){
+    it.cancel=true;it.cancelled=true;
+    if(it.dir==='in')abortRx(c,it);
+    else{it.readyP&&it.readyP.rej(new Error('cancel'));it.doneP&&it.doneP.rej(new Error('cancel'));if(it.state==='queued'||it.state==='paused')fail(it,t('cancelled'),true)}
+  }
+}
+const ctl=(it,op)=>{const c=conns.get(it.peerId);if(c&&c.ok)try{c.send(JSON.stringify({t:'ctl',id:it.id,op}))}catch(e){}};
+
+/* ================= transfer list UI ================= */
+function addItem(o){
+  $('#none')&&$('#none').remove();
+  const el=document.createElement('div');el.className='item '+o.dir;
+  el.innerHTML='<div class="ic">'+(o.dir==='out'?'↑':'↓')+'</div><div class="mid"><div class="nm"></div><div class="bar"><i></i></div><div class="sub"></div></div><div class="acts">'+
+   '<button class="btn ghost ib b-pause">⏸</button><button class="btn ghost ib b-resume">▶</button><button class="btn ghost ib b-retry">↻</button><button class="btn ghost ib b-cancel">✕</button>'+
+   '<button class="btn sm b-open"></button><button class="btn ghost sm b-save"></button></div>';
+  el.querySelector('.nm').textContent=o.name;
+  const it=Object.assign(o,{el,state:'queued',done:0,base:0,t0:performance.now(),bar:el.querySelector('.bar i'),sub:el.querySelector('.sub'),
+    bPause:el.querySelector('.b-pause'),bResume:el.querySelector('.b-resume'),bRetry:el.querySelector('.b-retry'),bCancel:el.querySelector('.b-cancel'),bOpen:el.querySelector('.b-open'),bSave:el.querySelector('.b-save')});
+  it.bPause.title=t('pause');it.bResume.title=t('resume');it.bRetry.title=t('retry');it.bCancel.title=t('cancel');it.bOpen.textContent=t('open');it.bSave.textContent=t('save');
+  it.bPause.onclick=()=>{it.paused=true;setState(it,'paused');ctl(it,'pause')};
+  it.bResume.onclick=()=>{it.paused=false;setState(it,'run');ctl(it,'resume')};
+  it.bCancel.onclick=()=>{it.cancel=true;it.cancelled=true;ctl(it,'cancel');if(it.dir==='in'){const c=conns.get(it.peerId);if(c)abortRx(c,it)}else if(it.state==='queued'||it.state==='paused')fail(it,t('cancelled'),true)};
+  it.bRetry.onclick=()=>{const c=conns.get(it.peerId);if(c&&c.ok)enqueue(c,it);else toast(t('connFirst'))};
+  it.bSave.onclick=()=>S.pcsave&&PCH?pcSaveItem(it,true):saveFromItem(it);
+  it.bOpen.onclick=async()=>{try{const f=await libFile(it.path);preview(f,it.path.split('/').pop())}catch(e){toast(t('notSupported'))}};
+  ITEMS.set(it.id,it);setState(it);
+  $('#list').prepend(el);return it;
+}
+function setState(it,s){
+  if(s)it.state=s;const st=it.state,live=st==='run'||st==='paused'||st==='queued';
+  it.el.classList.toggle('done',st==='done');it.el.classList.toggle('fail',st==='fail');
+  it.bPause.hidden=st!=='run';it.bResume.hidden=st!=='paused';it.bCancel.hidden=!live;
+  it.bRetry.hidden=!(st==='fail'&&it.dir==='out'&&!it.cancelled&&it.file);
+  it.bOpen.hidden=!(st==='done'&&it.dir==='in'&&it.path);it.bSave.hidden=!(st==='done'&&it.dir==='in'&&(it.path||it.pcPath||it.pcFiles||it.url));
+  if(st==='paused')it.sub.textContent=t('pause')+' · '+fmt(it.done)+' / '+fmt(it.size);
+}
+function progress(it,n){
+  it.done=n;const now=performance.now();if(now-(it.last||0)<120&&n<it.size)return;it.last=now;
+  const sp=(n-it.base)/((now-it.t0)/1000||1);
+  it.bar.style.width=(it.size?n/it.size*100:100)+'%';
+  if(it.state!=='paused'){const rem=it.size-n;it.sub.textContent=fmt(n)+' / '+fmt(it.size)+' · '+fmt(sp)+'/s'+(sp>1024&&rem>0?' · '+fmtT(rem/sp):'')}
+}
+function finish(it){
+  it.bar.style.width='100%';setState(it,'done');
+  it.sub.textContent=fmt(it.size)+' · '+(it.dir==='out'?t('sent'):t('recv'))+' ✓'+(it.verified?' '+t('verified'):'')+(it.packed?' · '+t('nFiles').replace('{n}',it.packed):'');
+  {const dur=it.t0?performance.now()-it.t0:0,got=it.size-(it.base||0);
+   histAdd({n:it.name,s:it.size,d:it.dir,p:(conns.get(it.peerId)||{}).label,dur:Math.round(dur),sp:dur>300?Math.round(got/(dur/1000)):0,v:it.verified?1:undefined,pk:it.packed||undefined})}
+  if(S.vibe!==false&&navigator.vibrate)try{navigator.vibrate(120)}catch(e){}
+}
+function fail(it,why,cancelled){if(cancelled)it.cancelled=true;setState(it,'fail');it.sub.textContent='✕ '+(why||'error');
+  if(!it._hf&&it.name){it._hf=1;histAdd({n:it.name,s:it.size||0,d:it.dir,p:(conns.get(it.peerId)||{}).label,err:String(why||'error').slice(0,80)})}}
+function addText(txt,from,dir){
+  $('#none')&&$('#none').remove();
+  const d=document.createElement('div');d.className='msg '+dir;d.innerHTML='<small></small><span></span>';
+  d.querySelector('small').textContent=from;d.querySelector('span').textContent=txt;
+  d.onclick=()=>navigator.clipboard.writeText(txt).then(()=>toast(t('copied')));
+  $('#list').prepend(d);
+}
+
+/* ================= receive ================= */
+async function onMeta(c,m){
+  const item=addItem({id:m.id,key:m.key,name:m.name,size:m.size,dir:'in',peerId:c.peer});
+  const rx={item,m,v:!!m.verify,crc:undefined,got:0,acked:0,q:Promise.resolve(),w:null,chunks:[],dir:null,rec:null};
+  c._rx=rx;let offset=0;
+  try{
+    if(OPFS){
+      const parts=splitPath(m.name),fname=parts.pop()||'file',dir=await dirAt(parts,true),pj=parts.join('/');
+      const P=store.get('part',{});let rec=P[m.key];
+      if(rec&&rec.size===m.size&&rec.dir===pj){
+        try{offset=(await (await dir.getFileHandle(rec.name+'.part')).getFile()).size;if(offset>=m.size)offset=0}catch(e){offset=0}
+      }else rec=null;
+      {
+        const need=m.size-offset;let free=Infinity;
+        try{const e=await navigator.storage.estimate();if(e&&e.quota)free=e.quota-e.usage}catch(x){}
+        if(need+52428800>free){
+          free=Math.max(0,free);
+          try{c.send(JSON.stringify({t:'reject',id:m.id,why:'space',need,free}))}catch(x){}
+          c._rx=null;fail(item,t('noSpaceRx').replace('{need}',fmt(need)).replace('{free}',fmt(free)));return;
+        }
+      }
+      if(!rec||!offset){rec={dir:pj,name:await uniqueName(dir,fname),size:m.size};offset=0}
+      P[m.key]=rec;store.set('part',P);
+      const h=await dir.getFileHandle(rec.name+'.part',{create:true});
+      if(rx.v&&offset>0)rx.crc=await crcOfBlob((await h.getFile()).slice(0,offset));
+      rx.w=await h.createWritable({keepExistingData:offset>0});if(offset>0)await rx.w.seek(offset);
+      rx.dir=dir;rx.rec=rec;
+    }
+  }catch(e){console.warn('OPFS fallback',e);rx.w=null;rx.dir=null;offset=0;rx.chunks=[]}
+  rx.got=offset;rx.acked=offset;item.base=offset;item.t0=performance.now();setState(item,'run');progress(item,offset);
+  c.send(JSON.stringify({t:'ready',id:m.id,offset}));
+}
+function onChunk(c,d){
+  const r=c._rx;if(!r)return;
+  r.q=r.q.then(async()=>{
+    if(r.err||r.dead)return;
+    if(r.w)await r.w.write(d);else r.chunks.push(d);
+    if(r.v)r.crc=crc32(d instanceof Uint8Array?d:new Uint8Array(d),r.crc);
+    r.got+=d.byteLength;progress(r.item,r.got);
+    if(r.got-r.acked>=ACKSTEP){r.acked=r.got;c.send(JSON.stringify({t:'ack',id:r.m.id,n:r.got}))}
+  }).catch(e=>{r.err=e;if(e&&e.name==='QuotaExceededError')rxFull(c,r)});
+}
+async function rxFull(c,r){
+  if(r.full)return;r.full=true;r.dead=true;if(c._rx===r)c._rx=null;
+  try{if(r.w){try{await r.w.close()}catch(x){try{await r.w.abort()}catch(y){}}r.w=null}}catch(x){}
+  try{c.send(JSON.stringify({t:'full',id:r.m.id}))}catch(x){}
+  fail(r.item,t('fullRx'));
+}
+async function onEnd(c,m){
+  const r=c._rx;if(!r||r.m.id!==m.id)return;c._rx=null;const it=r.item;
+  try{
+    await r.q;if(r.err)throw r.err;if(r.got!==r.m.size)throw new Error('size mismatch');
+    if(r.v&&m.crc!==undefined){
+      if(((r.crc===undefined?0:r.crc)>>>0)!==(m.crc>>>0)){
+        try{if(r.w)await r.w.abort()}catch(x){}r.w=null;
+        if(r.dir){try{await r.dir.removeEntry(r.rec.name+'.part')}catch(x){}const P=store.get('part',{});delete P[r.m.key];store.set('part',P)}
+        fail(it,t('verifyFail'));try{c.send(JSON.stringify({t:'done',id:m.id,ok:false}))}catch(x){}return;
+      }
+      it.verified=true;
+    }
+    if(r.w){
+      await r.w.close();r.w=null;await finalize(r.dir,r.rec.name+'.part',r.rec.name);
+      const P=store.get('part',{});delete P[r.m.key];store.set('part',P);
+      it.path=[r.rec.dir,r.rec.name].filter(Boolean).join('/');
+      if(r.m.pack){
+        try{
+          const pd=await dirAt(r.rec.dir?r.rec.dir.split('/'):[],true),zf=await (await pd.getFileHandle(r.rec.name)).getFile();
+          it.packed=await unpackZip(zf,pd,r.rec.name.replace(/\.zip$/i,'')||'pack',!!r.m.merge,r.rec.dir);
+          await pd.removeEntry(r.rec.name);it.path='';it.pcPath=r.m.merge?'':[r.rec.dir,UNZ.name].filter(Boolean).join('/');if(r.m.merge)it.pcFiles=UNZ.files.slice();
+        }catch(x){console.warn('unpack',x)}
+      }
+    }else{it.url=URL.createObjectURL(new Blob(r.chunks,{type:r.m.type||'application/octet-stream'}));it.saveName=r.m.name.split('/').pop();r.chunks=[]}
+    finish(it);c.send(JSON.stringify({t:'done',id:m.id,ok:it.verified?true:undefined}));sendInfo(c);
+    if(S.autosave||DLMODE)saveFromItem(it);
+    libDirty();
+    if(S.pcsave&&PCH)pcSaveItem(it,false).then(ok=>{if(ok)pcDrop(it)});
+  }catch(e){fail(it,e.message);try{c.send(JSON.stringify({t:'ctl',id:m.id,op:'cancel'}))}catch(x){}}
+}
+async function abortRx(c,it){
+  const r=c._rx;if(!r||r.item!==it){fail(it,t('cancelled'),true);return}
+  c._rx=null;r.dead=true;try{await r.q}catch(e){}
+  try{if(r.w)await r.w.abort()}catch(e){}
+  if(r.dir){try{await r.dir.removeEntry(r.rec.name+'.part')}catch(e){}const P=store.get('part',{});delete P[it.key];store.set('part',P)}
+  fail(it,t('cancelled'),true);
+}
+async function saveFromItem(it){
+  try{
+    if(it.path){const f=await libFile(it.path);saveFile(f,it.path.split('/').pop())}
+    else if(it.url){const a=document.createElement('a');a.href=it.url;a.download=clean(it.saveName||it.name);document.body.appendChild(a);a.click();a.remove()}
+  }catch(e){toast(e.message)}
+}
+
+/* ================= send ================= */
+function targets(){const ts=[...conns.values()].filter(c=>c.ok&&!c.limited&&c.sel!==false);if(!ts.length){toast(t('connFirst'));return null}return ts}
+async function maybeCompress(file,name){
+  if(!S.compress||!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size<300*1024)return{file,name};
+  try{
+    const bm=await createImageBitmap(file);let w=bm.width,h=bm.height;const sc=Math.min(1,S.maxDim/Math.max(w,h));w=Math.round(w*sc);h=Math.round(h*sc);
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(bm,0,0,w,h);
+    const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',S.quality/100));
+    if(b&&b.size<file.size)return{file:new File([b],file.name.replace(/\.\w+$/,'')+'.jpg',{type:'image/jpeg',lastModified:file.lastModified}),name:name.replace(/\.\w+$/,'')+'.jpg'};
+  }catch(e){}
+  return{file,name};
+}
+let PACK_MAX=300*1048576;
+async function sendFiles(list){
+  let ts=targets();if(!ts||!list.length)return;
+  {
+    const total=list.reduce((a,x)=>a+x.file.size,0);
+    ts=ts.filter(c=>{
+      const need=c.stream?Math.max(...list.map(x=>x.file.size)):total;
+      if(c.free!==undefined&&need+52428800>c.free){toast(t('peerLow').replace('{name}',c.label||'Device').replace('{need}',fmt(need)).replace('{free}',fmt(c.free)));return false}
+      return true;
+    });
+    if(!ts.length)return;
+  }
+  if(S.pack!==false&&list.length>=30){
+    const small=list.filter(x=>x.file.size<8388608),big=list.filter(x=>x.file.size>=8388608);
+    if(small.length>=30){
+      try{
+        toast(t('packing'));
+        const groups=[];let cur=[],sz=0;
+        for(const x of small){if(cur.length&&(sz+x.file.size>PACK_MAX||cur.length>=3000)){groups.push(cur);cur=[];sz=0}cur.push(x);sz+=x.file.size}
+        if(cur.length)groups.push(cur);
+        if(groups.length===1&&!big.length){
+          const first=list[0].name.split('/')[0],same=list.every(x=>x.name.includes('/')&&x.name.split('/')[0]===first);
+          const ents=same?list.map(x=>({file:x.file,name:x.name.slice(first.length+1)})):list;
+          const nm=(same?clean(first):'FileShare-'+list.length+'-files')+'.zip';
+          list=[{file:new File([await makeZip(ents)],nm,{type:'application/zip'}),name:nm,pack:ents.length}];
+        }else{
+          const packs=[];
+          for(let k=0;k<groups.length;k++)packs.push({file:new File([await makeZip(groups[k])],'FileShare-pack-'+(k+1)+'-of-'+groups.length+'.zip',{type:'application/zip'}),name:'FileShare-pack-'+(k+1)+'-of-'+groups.length+'.zip',pack:groups[k].length,merge:1});
+          list=[...packs,...big];
+        }
+      }catch(e){console.warn('pack',e)}
+    }
+  }
+  for(let {file,name,pack,merge} of list){
+    ({file,name}=await maybeCompress(file,name));
+    const key=fkey(name,file.size,file.lastModified);
+    for(const c of ts){enqueue(c,addItem({id:rid(),key,name,size:file.size,dir:'out',file,pack,merge,peerId:c.peer}))}
+  }
+}
+const fromList=fl=>[...fl].map(f=>({file:f,name:f.webkitRelativePath||f.name}));
+function enqueue(c,it){it.cancel=false;it.paused=false;setState(it,'queued');it.sub.textContent='…';c._q=(c._q||Promise.resolve()).then(()=>runSend(it)).catch(()=>{})}
+async function bufferedLow(dc){await Promise.race([new Promise(r=>{dc.onbufferedamountlow=()=>{dc.onbufferedamountlow=null;r()}}),sleep(1500)])}
+async function runSend(it){
+  if(it.cancel)return;
+  const c=conns.get(it.peerId);if(!c||!c.ok||!c.open){fail(it,t('lost'));return}
+  const f=it.file;setState(it,'run');
+  try{
+    it.readyP=defer();it.doneP=defer();it.acked=0;it.sent=0;it.stopFull=false;
+    const vf=S.verify!==false;c.send(JSON.stringify({t:'meta',id:it.id,key:it.key,name:it.name,size:f.size,type:f.type,verify:vf?1:0,pack:it.pack||undefined,merge:it.merge||undefined}));
+    const rd=await Promise.race([it.readyP,sleep(30000).then(()=>{throw new Error('timeout')})]);
+    let off=rd.offset||0;it.sent=off;it.acked=off;it.base=off;it.t0=performance.now();progress(it,off);
+    let crc;if(vf&&off>0)crc=await crcOfBlob(f.slice(0,off));
+    const dc=c.dataChannel;dc.bufferedAmountLowThreshold=LOW;
+    while(off<f.size){
+      const end=Math.min(off+BLOCK,f.size),block=await f.slice(off,end).arrayBuffer();
+      for(let p=0;p<block.byteLength;p+=CHUNK){
+        while(it.paused&&!it.cancel)await sleep(150);
+        if(it.cancel)throw new Error('cancel');
+        if(dc.readyState!=='open')throw new Error('lost');
+        while(it.sent-it.acked>WINDOW){await sleep(20);if(it.cancel)throw new Error('cancel');if(dc.readyState!=='open')throw new Error('lost')}
+        if(dc.bufferedAmount>HIGH)await bufferedLow(dc);
+        const n=Math.min(CHUNK,block.byteLength-p);
+        if(it.stopFull)throw new Error('rxfull');
+        const u=new Uint8Array(block,p,n);c.send(u);if(vf)crc=crc32(u,crc);it.sent+=n;progress(it,it.sent);
+        if(S.limit>0){const want=(it.sent-it.base)/(S.limit*1048576)*1000-(performance.now()-it.t0);if(want>5)await sleep(want)}
+      }
+      off=end;
+    }
+    progress(it,f.size);
+    c.send(JSON.stringify({t:'end',id:it.id,crc:vf?(crc===undefined?0:crc):undefined}));
+    const dm=await it.doneP;if(dm&&dm.ok===false)throw new Error(t('verifyFail'));it.verified=!!(dm&&dm.ok===true);finish(it);
+  }catch(e){
+    if(e.message==='cancel')fail(it,t('cancelled'),true);
+    else fail(it,e.message==='lost'?t('lost'):e.message==='rxfull'?t('rxFull'):e.message);
+  }
+}
+function sendText(){
+  const v=$('#txt').value.trim();if(!v)return;const ts=targets();if(!ts)return;
+  ts.forEach(c=>c.send(JSON.stringify({t:'text',text:v})));addText(v,t('you'),'out');histAdd({n:v.slice(0,80),s:0,d:'out',x:1});$('#txt').value='';
+}
+
+/* ---- zip pack (stored) ---- */
+async function makeZip(list){
+  const enc=new TextEncoder(),parts=[],cen=[];let off=0;
+  for(const {file,name} of list){
+    const nb=enc.encode(name),crc=await crcOfBlob(file),sz=file.size;
+    const lh=new Uint8Array(30+nb.length),dv=new DataView(lh.buffer);
+    dv.setUint32(0,0x04034b50,true);dv.setUint16(4,20,true);dv.setUint16(6,0x0800,true);dv.setUint16(12,0x21,true);
+    dv.setUint32(14,crc,true);dv.setUint32(18,sz,true);dv.setUint32(22,sz,true);dv.setUint16(26,nb.length,true);lh.set(nb,30);
+    const ch=new Uint8Array(46+nb.length),cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint16(8,0x0800,true);cv.setUint16(14,0x21,true);
+    cv.setUint32(16,crc,true);cv.setUint32(20,sz,true);cv.setUint32(24,sz,true);cv.setUint16(28,nb.length,true);cv.setUint32(42,off,true);ch.set(nb,46);
+    parts.push(lh,file);cen.push(ch);off+=lh.length+sz;
+  }
+  const cs=cen.reduce((a,x)=>a+x.length,0),e=new Uint8Array(22),ev=new DataView(e.buffer);
+  ev.setUint32(0,0x06054b50,true);ev.setUint16(8,cen.length,true);ev.setUint16(10,cen.length,true);ev.setUint32(12,cs,true);ev.setUint32(16,off,true);
+  return new Blob([...parts,...cen,e],{type:'application/zip'});
+}
+const UNZ={name:'',files:[]};
+async function unpackZip(zf,baseDir,folderName,merge,relBase){
+  const sz=zf.size,tail=new Uint8Array(await zf.slice(Math.max(0,sz-70000),sz).arrayBuffer()),tv=new DataView(tail.buffer);
+  let e=-1;for(let i=tail.length-22;i>=0;i--)if(tv.getUint32(i,true)===0x06054b50){e=i;break}
+  if(e<0)throw new Error('bad zip');
+  const n=tv.getUint16(e+10,true),cso=tv.getUint32(e+16,true),cb=new Uint8Array(await zf.slice(cso,sz).arrayBuffer()),cv=new DataView(cb.buffer);
+  UNZ.files=[];const fnm=merge?'':await uniqueName(baseDir,folderName);UNZ.name=fnm;const root=merge?baseDir:await baseDir.getDirectoryHandle(fnm,{create:true});
+  let p=0,done=0;
+  for(let i=0;i<n;i++){
+    if(cv.getUint32(p,true)!==0x02014b50)break;
+    const meth=cv.getUint16(p+10,true),csz=cv.getUint32(p+20,true),nl=cv.getUint16(p+28,true),el=cv.getUint16(p+30,true),cl=cv.getUint16(p+32,true),lo=cv.getUint32(p+42,true);
+    const name=new TextDecoder().decode(cb.subarray(p+46,p+46+nl));p+=46+nl+el+cl;
+    if(meth!==0||name.endsWith('/'))continue;
+    const lh=new DataView(await zf.slice(lo,lo+30).arrayBuffer()),ds=lo+30+lh.getUint16(26,true)+lh.getUint16(28,true);
+    const parts=splitPath(name),fn=parts.pop();if(!fn)continue;
+    let d=root;for(const x of parts)d=await d.getDirectoryHandle(x,{create:true});
+    const fin=await uniqueName(d,fn),h=await d.getFileHandle(fin,{create:true}),w=await h.createWritable();
+    await w.write(zf.slice(ds,ds+csz));await w.close();done++;UNZ.files.push([relBase||'',fnm,...parts,fin].filter(Boolean).join('/'));
+  }
+  return done;
+}
+/* ---- connection type ---- */
+async function connType(c){
+  try{
+    const pc=c.peerConnection;if(!pc)return;const st=await pc.getStats();let pair=null;
+    st.forEach(r=>{if(r.type==='transport'&&r.selectedCandidatePairId)pair=r.selectedCandidatePairId});
+    let cp=null;st.forEach(r=>{if(r.type==='candidate-pair'&&((pair&&r.id===pair)||(!pair&&r.nominated&&r.state==='succeeded')))cp=r});
+    if(!cp)return;let l,m;st.forEach(r=>{if(r.id===cp.localCandidateId)l=r;if(r.id===cp.remoteCandidateId)m=r});
+    if(!l||!m)return;
+    c.ctype=(l.candidateType==='relay'||m.candidateType==='relay')?'relay':(l.candidateType==='host'&&m.candidateType==='host')?'lan':'direct';renderPeers();
+  }catch(e){}
+}
+const fmtT=s=>s<60?Math.max(1,Math.round(s))+'s':s<3600?Math.floor(s/60)+'m '+Math.round(s%60)+'s':Math.floor(s/3600)+'h '+Math.round(s%3600/60)+'m';
+/* ---- bulk controls ---- */
+const pauseAll=()=>ITEMS.forEach(it=>{if(it.state==='run'){it.paused=true;setState(it,'paused');ctl(it,'pause')}});
+const resumeAll=()=>ITEMS.forEach(it=>{if(it.state==='paused'){it.paused=false;setState(it,'run');ctl(it,'resume')}});
+const clearDone=()=>{ITEMS.forEach((it,k)=>{if(it.state==='done'||it.state==='fail'){it.el.remove();ITEMS.delete(k)}});if(!$('#list').children.length)$('#list').innerHTML='<div class="empty" id="none">'+t('nothing')+'</div>'};
+
+/* ================= remote browse (shared folders) ================= */
+const sharedList=()=>store.get('shared',[]);
+const isSharedRoot=p=>sharedList().includes(p);
+const underShared=p=>{const parts=p.split('/');if(!p||parts.some(x=>!x||x==='.'||x==='..'))return false;return sharedList().some(r=>p===r||p.startsWith(r+'/'))};
+function toggleShare(e){
+  const L=sharedList();
+  if(L.includes(e.path)){store.set('shared',L.filter(x=>x!==e.path));toast(t('unshare')+' ✓')}
+  else{store.set('shared',[...L,e.path]);toast(t('shareFolder')+' ✓')}
+  libDirty();
+}
+async function onLs(c,m){
+  const path=(m.path||'').split('/').filter(Boolean).join('/'),out={t:'lsr',id:m.id,path,items:[]};
+  try{
+    if(!path)out.items=sharedList().map(p=>({n:p.split('/').pop(),p,k:'dir'}));
+    else if(!underShared(path))out.err='denied';
+    else{
+      const d=await dirAt(path.split('/'),false);
+      for await(const [n,h] of d.entries()){
+        if(n.startsWith('.')||n.endsWith('.part'))continue;
+        if(h.kind==='directory')out.items.push({n,p:path+'/'+n,k:'dir'});
+        else out.items.push({n,p:path+'/'+n,k:'file',s:(await h.getFile()).size});
+      }
+    }
+  }catch(e){out.err='error'}
+  try{c.send(JSON.stringify(out))}catch(e){}
+}
+async function onGet(c,m){
+  try{
+    if(typeof m.p!=='string'||!underShared(m.p))return;
+    const f=await libFile(m.p),name=m.p.split('/').pop();
+    enqueue(c,addItem({id:rid(),key:fkey(name,f.size,f.lastModified),name,size:f.size,dir:'out',file:f,peerId:c.peer}));
+  }catch(e){}
+}
+const REMP=new Map(),REM={c:null,path:''};
+function remAsk(path){
+  return new Promise(res=>{
+    const id=rid();REMP.set(id,res);
+    try{REM.c.send(JSON.stringify({t:'ls',id,path}))}catch(e){REMP.delete(id);res({err:'lost',items:[]});return}
+    setTimeout(()=>{if(REMP.delete(id))res({err:'timeout',items:[]})},10000);
+  });
+}
+async function remRender(){
+  const box=$('#remList');box.innerHTML='';box.append(mk('div','empty','…'));
+  $('#remPath').textContent=REM.path||'/';$('#remUp').hidden=!REM.path;
+  const r=await remAsk(REM.path);box.innerHTML='';
+  if(r.err==='denied'&&REM.path){REM.path='';return remRender()}
+  if(r.err){box.append(mk('div','empty',t('remoteErr')));return}
+  if(!r.items.length){box.append(mk('div','empty',t('nothingShared')));return}
+  r.items.sort((a,b)=>(a.k==='dir'?0:1)-(b.k==='dir'?0:1)||a.n.localeCompare(b.n));
+  r.items.forEach(it=>{
+    const row=mk('div','grow'),ic=iconBox({name:it.n,kind:it.k==='dir'?'dir':'file',type:'',count:0},'gic'),info=mk('div','ginfo');
+    info.append(mk('b',null,it.n),mk('span',null,it.k==='dir'?t('folder'):fmt(it.s)));
+    row.append(ic,info);
+    if(it.k==='dir')row.onclick=()=>{REM.path=it.p;remRender()};
+    else{const g=mk('button','btn sm',t('getFile'));g.onclick=ev=>{ev.stopPropagation();try{REM.c.send(JSON.stringify({t:'get',p:it.p}));toast(t('requested'))}catch(e){toast(t('lost'))}};row.append(g)}
+    box.append(row);
+  });
+}
+function openRemote(c){REM.c=c;REM.path='';$('#remT').textContent=(c.label||'Device');$('#mRem').classList.add('on');remRender()}
+$('#remX').onclick=()=>$('#mRem').classList.remove('on');
+$('#remUp').onclick=()=>{const roots=sharedList();const parts=REM.path.split('/');parts.pop();REM.path=parts.join('/');
+  /* the other side decides what is shared; going above a shared root returns to the root list */
+  remRender()};
+/* ================= clipboard sync ================= */
+const CLIP={last:'',first:true,iv:null};
+function clipStart(){clearInterval(CLIP.iv);CLIP.first=true;if(S.clip)CLIP.iv=setInterval(clipPoll,1500)}
+async function clipPoll(){
+  if(!S.clip||!document.hasFocus()||!navigator.clipboard||!navigator.clipboard.readText)return;
+  const ts=[...conns.values()].filter(c=>c.ok&&c.open);if(!ts.length)return;
+  let v;try{v=await navigator.clipboard.readText()}catch(e){return}
+  if(CLIP.first){CLIP.first=false;CLIP.last=v;return}
+  if(!v||v===CLIP.last||v.length>100000)return;CLIP.last=v;
+  ts.forEach(c=>{try{c.send(JSON.stringify({t:'clip',text:v}))}catch(e){}});
+}
+async function onClip(c,m){
+  if(!S.clip||typeof m.text!=='string'||!m.text||m.text.length>100000)return;CLIP.last=m.text;
+  try{await navigator.clipboard.writeText(m.text);toast(t('clipGot'))}catch(e){addText(m.text,c.label||'Device','in');toast(t('clipGotFeed'))}
+}
+/* ================= save to a real PC folder (desktop Chrome/Edge) ================= */
+const idb=(mode,fn)=>new Promise((res,rej)=>{const r=indexedDB.open('fs-pc',1);r.onupgradeneeded=()=>r.result.createObjectStore('h');r.onerror=()=>rej(r.error);
+  r.onsuccess=()=>{const db=r.result,tx=db.transaction('h',mode),rq=fn(tx.objectStore('h'));tx.oncomplete=()=>{res(rq&&rq.result);db.close()};tx.onerror=()=>rej(tx.error)}});
+let PCH=null;
+const pcOK=()=>typeof window.showDirectoryPicker==='function';
+function pcUi(){
+  const b=$('#pcBox');if(!b)return;b.hidden=!pcOK();
+  $('#pcName').textContent=PCH?PCH.name:t('pcNone');$('#sPc').checked=!!S.pcsave&&!!PCH;$('#sPcMove').checked=S.pcmove!==false;
+}
+async function pcLoad(){try{PCH=(await idb('readonly',s=>s.get('dir')))||null}catch(e){PCH=null}pcUi()}
+async function pcPerm(h,ask){if(!h.queryPermission)return true;let p=await h.queryPermission({mode:'readwrite'});if(p!=='granted'&&ask)p=await h.requestPermission({mode:'readwrite'});return p==='granted'}
+function pcPick(){return G(async()=>{const h=await window.showDirectoryPicker({mode:'readwrite'});await idb('readwrite',x=>x.put(h,'dir'));PCH=h;S.pcsave=true;saveS();pcUi();toast(t('pcSet'))})()}
+async function pcCopy(path){
+  if(!PCH||!(await pcPerm(PCH,true)))return false;
+  const parts=path.split('/'),nm=parts.pop(),sd=await dirAt(parts,false);let h,kind='file';
+  try{h=await sd.getFileHandle(nm)}catch(e){h=await sd.getDirectoryHandle(nm);kind='dir'}
+  let dd=PCH;for(const x of parts)dd=await dd.getDirectoryHandle(x,{create:true});
+  await copyTo(h,kind,dd,await uniqueName(dd,nm));return true;
+}
+async function pcSaveItem(it,gesture){
+  const paths=it.pcFiles||[it.path||it.pcPath].filter(Boolean);
+  if(!paths.length){saveFromItem(it);return false}
+  try{
+    for(const p of paths){if(!(await pcCopy(p))){toast(t('pcAllow'));return false}}
+    toast(t('pcSaved'));return true;
+  }catch(e){toast(gesture?e.message:t('pcAllow'));return false}
+}
+async function pcDrop(it){
+  if(S.pcmove===false)return;
+  const paths=it.pcFiles||[it.path||it.pcPath].filter(Boolean);
+  for(const p of paths){
+    const parts=p.split('/');if(synOn(parts[0]))continue;
+    try{
+      const nm=parts.pop(),d=await dirAt(parts,false);await d.removeEntry(nm,{recursive:true});
+      while(parts.length){
+        const dd=await dirAt(parts,false);let empty=true;for await(const _ of dd.entries()){empty=false;break}
+        if(!empty)break;const last=parts.pop();await (await dirAt(parts,false)).removeEntry(last);
+      }
+    }catch(e){}
+  }
+  it.path='';it.pcPath='';it.pcFiles=null;it.sub.textContent+=' · 💾 '+t('pcMoved');setState(it,'done');libDirty();
+}
+
+/* ================= offline pairing (no internet, same Wi-Fi / hotspot) ================= */
+class OConn{
+  constructor(pc){this.peerConnection=pc;this.peer='fshare-O'+rid().slice(0,5).toUpperCase();this.open=false;this.offline=true;this.dataChannel=null;this._h={}}
+  on(e,f){(this._h[e]=this._h[e]||[]).push(f);return this}
+  emit(e,...a){(this._h[e]||[]).forEach(f=>{try{f(...a)}catch(x){console.error(x)}})}
+  attach(dc){this.dataChannel=dc;dc.binaryType='arraybuffer';
+    dc.onopen=()=>{this.open=true;this.emit('open')};dc.onmessage=e=>this.emit('data',e.data);
+    dc.onclose=()=>{this.open=false;this.emit('close')};dc.onerror=e=>this.emit('error',e)}
+  send(d){this.dataChannel.send(d)}
+  close(){try{this.dataChannel&&this.dataChannel.close()}catch(e){}try{this.peerConnection.close()}catch(e){}if(this.open){this.open=false;this.emit('close')}}
+}
+const OFF={pc:null,oc:null};
+const b64u=u8=>{let s='';u8.forEach(x=>s+=String.fromCharCode(x));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+const unb64u=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
+async function offEnc(desc){
+  const raw=new TextEncoder().encode(JSON.stringify({t:desc.type,s:desc.sdp}));
+  if(window.CompressionStream){const cs=new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'));return 'FS1.'+b64u(new Uint8Array(await new Response(cs).arrayBuffer()))}
+  return 'FS0.'+b64u(raw);
+}
+async function offDec(code){
+  code=(code||'').trim().replace(/\s+/g,'');const [v,body]=code.split('.');if(!body||(v!=='FS0'&&v!=='FS1'))throw new Error('bad');
+  let u=unb64u(body);if(v==='FS1'){const ds=new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'));u=new Uint8Array(await new Response(ds).arrayBuffer())}
+  const o=JSON.parse(new TextDecoder().decode(u));if(!o.s||!o.t)throw new Error('bad');return{type:o.t,sdp:o.s};
+}
+const offGather=pc=>new Promise(res=>{
+  if(pc.iceGatheringState==='complete')return res();
+  const f=()=>{if(pc.iceGatheringState==='complete'){pc.removeEventListener('icegatheringstatechange',f);res()}};
+  pc.addEventListener('icegatheringstatechange',f);setTimeout(res,3500);
+});
+function offNew(incoming){
+  if(OFF.oc){try{OFF.oc.close()}catch(e){}}
+  const pc=new RTCPeerConnection({iceServers:[]}),oc=new OConn(pc);OFF.pc=pc;OFF.oc=oc;setup(oc,incoming);
+  pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected'){$('#mOff').classList.remove('on');offStopScan();toast(t('offDone'))}};
+  return {pc,oc};
+}
+function offShow(boxId,code){
+  const b=$('#'+boxId);b.value=code;
+  const q=$('#'+boxId+'Qr');q.innerHTML='';
+  if(window.QRCode&&code.length<1400){try{new QRCode(q,{text:code,width:200,height:200,colorDark:'#0b0f1a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L})}catch(e){}}
+}
+const offStart=()=>G(async()=>{
+  const {pc,oc}=offNew(false);oc.attach(pc.createDataChannel('data',{ordered:true}));
+  $('#offHost').hidden=false;$('#offJoin').hidden=true;$('#offHostCode').value='…';
+  await pc.setLocalDescription(await pc.createOffer());await offGather(pc);
+  offShow('offHostCode',await offEnc(pc.localDescription));
+})();
+const offFinish=()=>G(async()=>{
+  try{const d=await offDec($('#offHostIn').value);await OFF.pc.setRemoteDescription(d)}catch(e){toast(t('offBad'))}
+})();
+const offAnswer=()=>G(async()=>{
+  let d;try{d=await offDec($('#offJoinIn').value)}catch(e){return toast(t('offBad'))}
+  const {pc,oc}=offNew(true);pc.ondatachannel=e=>oc.attach(e.channel);
+  await pc.setRemoteDescription(d);await pc.setLocalDescription(await pc.createAnswer());await offGather(pc);
+  $('#offReplyW').hidden=false;offShow('offReply',await offEnc(pc.localDescription));
+})();
+let SCAN=null;
+async function offScan(target){
+  if(!window.BarcodeDetector||!navigator.mediaDevices)return toast(t('notSupported'));
+  offStopScan();
+  try{
+    const det=new BarcodeDetector({formats:['qr_code']}),st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    const v=$('#offVid');v.srcObject=st;v.hidden=false;await v.play();SCAN={st,v};
+    const tick=async()=>{
+      if(!SCAN)return;
+      try{const r=await det.detect(v);if(r.length&&/^FS[01]\./.test(r[0].rawValue)){$(target).value=r[0].rawValue;offStopScan();toast('✓');if(target==='#offJoinIn')offAnswer();else offFinish();return}}catch(e){}
+      setTimeout(tick,250);
+    };tick();
+  }catch(e){toast(e.message)}
+}
+function offStopScan(){if(SCAN){SCAN.st.getTracks().forEach(x=>x.stop());SCAN.v.hidden=true;SCAN=null}}
+function offOpen(){$('#offHost').hidden=true;$('#offJoin').hidden=true;$('#offReplyW').hidden=true;$('#mOff').classList.add('on')}
+
+/* ================= one-time download link (receiver needs no install / approval) ================= */
+const DLTOK=new URLSearchParams(location.search).get('dl')||'',DLK=new Map(),DLMODE=!!DLTOK;
+function dlValid(tok){const r=DLK.get(tok);if(!r)return null;if(Date.now()>r.exp){DLK.delete(tok);return null}return r}
+function dlMake(path){
+  const a=crypto.getRandomValues(new Uint8Array(12)),tok=b64u(a);
+  DLK.set(tok,{path,exp:Date.now()+3600e3});
+  return location.origin+location.pathname+'?c='+myCode+'&dl='+tok;
+}
+function qrDataUrl(text,size){
+  try{if(!window.QRCode)return '';const d=document.createElement('div');new QRCode(d,{text,width:size,height:size,colorDark:'#0b0f1a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});const cv=d.querySelector('canvas');return cv?cv.toDataURL('image/png'):''}catch(e){return ''}
+}
+const opShareLink=e=>G(async()=>{
+  if(!peer||!peer.open)return toast(t('conning'));
+  const link=dlMake(e.path);
+  const v=await dlg({title:t('shareLink'),msg:t('dlMsg').replace('{name}',e.name)+'\n'+t('dlScan'),input:link,ok:t('copyLink'),img:qrDataUrl(link,240),imgBig:true});
+  if(v!=null){try{await navigator.clipboard.writeText(link);toast(t('linkCopied'))}catch(x){}}
+})();
+async function dlSend(c,tok){
+  const r=dlValid(tok);if(!r)return;DLK.delete(tok);
+  try{
+    const f=await libFile(r.path),name=r.path.split('/').pop();
+    enqueue(c,addItem({id:rid(),key:fkey(name,f.size,f.lastModified),name,size:f.size,dir:'out',file:f,peerId:c.peer}));
+  }catch(e){try{c.close()}catch(x){}}
+}
+
+/* ================= folder sync (add-only: never deletes, never overwrites) ================= */
+const synPairs=()=>store.get('sync',[]);
+const synFor=(c,f)=>synPairs().find(p=>p.did===c.did&&p.folder===f);
+const synOn=f=>synPairs().some(p=>p.folder===f);
+const synOkName=f=>typeof f==='string'&&f&&f===clean(f)&&!f.includes('/')&&!f.startsWith('.');
+const synSkip=()=>store.get('synskip',[]);
+function synAddPair(c,f){const L=synPairs();if(!L.some(p=>p.did===c.did&&p.folder===f))store.set('sync',[...L,{folder:f,did:c.did,name:c.label}]);libDirty()}
+function synDelPair(c,f){store.set('sync',synPairs().filter(p=>!(p.did===c.did&&p.folder===f)));libDirty()}
+async function synManifest(folder){
+  const out=[];
+  try{const d=await dirAt([folder],false);for await(const x of walk(d,''))if(!x.name.split('/').some(p=>p.startsWith('.')))out.push([x.name,x.file.size])}catch(e){}
+  return out;
+}
+async function synSend(c){
+  if(!c||!c.ok||c.limited||!c.did)return;
+  for(const p of synPairs().filter(p=>p.did===c.did)){
+    try{c.send(JSON.stringify({t:'syn',folder:p.folder,files:await synManifest(p.folder)}))}catch(e){}
+  }
+}
+async function onSyn(c,m){
+  if(!synFor(c,m.folder)||!Array.isArray(m.files))return;
+  const mine=new Set((await synManifest(m.folder)).map(x=>x[0])),skip=new Set(synSkip());
+  const busy=new Set([...ITEMS.values()].filter(i=>i.dir==='in'&&i.state!=='done'&&i.state!=='fail').map(i=>i.name));
+  const want=m.files.map(x=>x&&x[0]).filter(n=>typeof n==='string'&&!mine.has(n)&&!skip.has(m.folder+'/'+n)&&!busy.has(m.folder+'/'+n)).slice(0,5000);
+  if(want.length)try{c.send(JSON.stringify({t:'synreq',folder:m.folder,paths:want}))}catch(e){}
+}
+async function onSynReq(c,m){
+  if(!synFor(c,m.folder)||!Array.isArray(m.paths))return;
+  for(const rel of m.paths.slice(0,5000)){
+    if(typeof rel!=='string'||rel.split('/').some(x=>!x||x==='.'||x==='..'||x.startsWith('.')))continue;
+    try{
+      const name=m.folder+'/'+rel,f=await libFile(name);
+      enqueue(c,addItem({id:rid(),key:fkey(name,f.size,f.lastModified),name,size:f.size,dir:'out',file:f,peerId:c.peer}));
+    }catch(e){}
+  }
+}
+async function onSynOffer(c,m){
+  if(!synOkName(m.folder))return;
+  if(synFor(c,m.folder)){try{c.send(JSON.stringify({t:'synok',folder:m.folder}))}catch(e){}synSend(c);return}
+  const ok=await dlg({title:'🔄 '+m.folder,msg:t('syncAsk').replace('{name}',c.label||'Device').replace('{f}',m.folder),ok:t('allow')});
+  if(!ok){try{c.send(JSON.stringify({t:'synstop',folder:m.folder}))}catch(e){}return}
+  try{await dirAt([m.folder],true)}catch(e){return}
+  synAddPair(c,m.folder);try{c.send(JSON.stringify({t:'synok',folder:m.folder}))}catch(e){}
+  toast(t('syncOn').replace('{f}',m.folder));synSend(c);
+}
+function opSync(e){
+  if(!synOkName(e.name)||e.path!==e.name)return toast(t('syncTop'));
+  const ps=[...conns.values()].filter(c=>c.ok&&!c.limited&&c.did);
+  if(synOn(e.name)){
+    ps.forEach(c=>{if(synFor(c,e.name)){try{c.send(JSON.stringify({t:'synstop',folder:e.name}))}catch(x){}}});
+    store.set('sync',synPairs().filter(p=>p.folder!==e.name));libDirty();toast(t('syncStopped'));return;
+  }
+  if(!ps.length)return toast(t('connFirst'));
+  ps.forEach(c=>{try{c.send(JSON.stringify({t:'synoffer',folder:e.name}))}catch(x){}});toast(t('syncOffered'));
+}
+setInterval(()=>conns.forEach(c=>synSend(c)),45000);
+
+/* ================= shared (PWA share target) ================= */
+async function loadShared(){
+  if(!new URLSearchParams(location.search).get('shared'))return;
+  try{
+    const c=await caches.open('fs-share'),keys=await c.keys(),files=[];
+    for(const k of keys){
+      const r=await c.match(k);
+      if(k.url.includes('/shared-text')){$('#txt').value=await r.text();continue}
+      const b=await r.blob();files.push({file:new File([b],decodeURIComponent(r.headers.get('x-name')||'file'),{type:b.type}),name:decodeURIComponent(r.headers.get('x-name')||'file')});
+    }
+    for(const k of keys)await c.delete(k);
+    history.replaceState(null,'',location.pathname);
+    if(files.length){PENDING.push(...files);toast(t('shared'));flushPending()}
+  }catch(e){}
+}
+function flushPending(){if(!PENDING.length)return;if([...conns.values()].some(c=>c.ok&&c.sel!==false)){const p=PENDING;PENDING=[];sendFiles(p)}}
+
+/* ================= preview ================= */
+let pvUrl=null,pvFile=null,pvName='',pvEntry=null;
+async function preview(file,name,entry){
+  pvFile=file;pvName=name;pvEntry=entry||null;if(pvUrl)URL.revokeObjectURL(pvUrl);pvUrl=URL.createObjectURL(file);
+  $('#mvTitle').textContent=name;const body=$('#mvBody');body.innerHTML='';const m=mimeOf(name,file.type);let el;
+  if(m.startsWith('image/')){el=new Image();el.src=pvUrl}
+  else if(m.startsWith('video/')){el=document.createElement('video');el.src=pvUrl;el.controls=true;el.playsInline=true;el.autoplay=true}
+  else if(m.startsWith('audio/')){el=document.createElement('audio');el.src=pvUrl;el.controls=true;el.autoplay=true;el.style.width='100%'}
+  else if(m==='application/pdf'){el=document.createElement('iframe');el.src=pvUrl}
+  else if((m.startsWith('text/')||m==='application/json')&&file.size<2*1024*1024){el=document.createElement('pre');el.textContent=await file.text()}
+  else{el=document.createElement('div');el.className='empty';el.textContent=iconOf(name)+' '+name+' · '+fmt(file.size)}
+  body.append(el);$('#mView').classList.add('on');pvNav();
+}
+const pvList=()=>pvEntry?LIB.cur.filter(x=>x.kind==='file'):[];
+function pvNav(){
+  const L=pvList(),i=pvEntry?L.findIndex(x=>x.path===pvEntry.path):-1;
+  $('#mvPrev').hidden=!(i>0);$('#mvNext').hidden=!(i>=0&&i<L.length-1);$('#mvSend').hidden=$('#mvDel').hidden=!pvEntry;
+}
+function pvStep(d){if(!pvEntry)return;const L=pvList(),i=L.findIndex(x=>x.path===pvEntry.path),n=L[i+d];if(n)preview(n.f,n.name,n)}
+function closePreview(){$('#mView').classList.remove('on');$('#mvBody').innerHTML='';if(pvUrl)URL.revokeObjectURL(pvUrl);pvUrl=null}
+
+/* ================= file manager (Google Files style) ================= */
+const mk=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!=null)n.textContent=txt;return n};
+const CATS=[
+  {id:'img',ico:'🖼️',c:'#3b82f6',k:'cImg',x:['jpg','jpeg','png','gif','webp','bmp','svg','heic','avif']},
+  {id:'vid',ico:'🎬',c:'#ef4444',k:'cVid',x:['mp4','mkv','webm','mov','avi','3gp','m4v']},
+  {id:'aud',ico:'🎵',c:'#f59e0b',k:'cAud',x:['mp3','wav','ogg','m4a','aac','flac','opus']},
+  {id:'doc',ico:'📄',c:'#22c55e',k:'cDoc',x:['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','md','csv','rtf','odt','json']},
+  {id:'arc',ico:'🗜️',c:'#8b5cf6',k:'cArc',x:['zip','rar','7z','tar','gz']},
+  {id:'apk',ico:'📱',c:'#14b8a6',k:'cApk',x:['apk']}
+];
+function catOf(name,type){
+  const m=mimeOf(name,type),e=ext(name);
+  if(m.startsWith('image/'))return'img';if(m.startsWith('video/'))return'vid';if(m.startsWith('audio/'))return'aud';
+  const c=CATS.find(k=>k.x.includes(e));return c?c.id:'oth';
+}
+const catLabel=id=>{const c=CATS.find(k=>k.id===id);return c?t(c.k):({dups:t('cDups'),large:t('cLarge'),old:t('cOld')}[id]||'')};
+
+const LIB={mode:'home',path:[],cat:null,q:'',searching:false,sort:store.get('fmSort','name'),view:store.get('fmView','list'),sel:new Set(),selMode:false,cur:[],all:null,gen:0};
+const LAZY=[];
+const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){io.unobserve(en.target);en.target._load&&en.target._load()}}),{rootMargin:'250px'});
+const parentParts=p=>p.split('/').slice(0,-1);
+const dest=()=>LIB.mode==='dir'?[...LIB.path]:[];
+const G=f=>async(...a)=>{try{return await f(...a)}catch(x){console.warn(x);toast((x&&x.message)||'Error')}};
+
+/* ---- navigation (browser back button works) ---- */
+const snap=()=>({mode:LIB.mode,path:[...LIB.path],cat:LIB.cat});
+function setLoc(s){LIB.mode=s.mode||'home';LIB.path=[...(s.path||[])];LIB.cat=s.cat||null;LIB.sel.clear();LIB.selMode=false;LIB.searching=false;LIB.q='';LIB.fresh=true;if(LIB.path[0]!==PRIVD)PRIV.open=false;const q=$('#fmQ');if(q)q.value=''}
+function nav(s){setLoc(s);try{history.pushState({fm:snap()},'')}catch(e){}libRender()}
+addEventListener('popstate',e=>{setLoc((e.state&&e.state.fm)||{});libRender()});
+
+/* ---- data ---- */
+async function scanAll(){
+  const out=[];
+  async function go(dir,pre){
+    for await(const [n,h] of dir.entries()){
+      if(h.kind==='file'){if(n.endsWith('.part'))continue;const f=await h.getFile();out.push({name:n,path:pre+n,kind:'file',size:f.size,mtime:f.lastModified,type:f.type,h,f})}
+      else if(!(pre===''&&(n===TRASH||n===PRIVD)))await go(h,pre+n+'/');
+    }
+  }
+  await go(await root(),'');return out;
+}
+const getAll=async()=>LIB.all||(LIB.all=await scanAll());
+async function listDir(parts){
+  const dir=await dirAt(parts,false),out=[],pre=parts.length?parts.join('/')+'/':'';
+  for await(const [name,h] of dir.entries()){
+    if(h.kind==='file'){if(name.endsWith('.part'))continue;const f=await h.getFile();out.push({name,path:pre+name,kind:'file',size:f.size,mtime:f.lastModified,type:f.type,h,f})}
+    else if(parts.length||(name!==TRASH&&name!==PRIVD)){let n=0;for await(const [x] of h.entries()){if(!x.endsWith('.part'))n++}out.push({name,path:pre+name,kind:'dir',size:0,count:n,mtime:0,h})}
+  }
+  return out;
+}
+function sortEntries(a,flat){
+  const s=LIB.sort;
+  return a.sort((x,y)=>{
+    if(!flat&&x.kind!==y.kind)return x.kind==='dir'?-1:1;
+    if(s==='size'&&x.size!==y.size)return y.size-x.size;
+    if(s==='date'&&x.mtime!==y.mtime)return y.mtime-x.mtime;
+    return x.name.localeCompare(y.name,undefined,{numeric:true,sensitivity:'base'});
+  });
+}
+function libDirty(){LIB.all=null;if($('#p-files').classList.contains('on'))libRender()}
+
+/* ---- thumbnails ---- */
+const TH=new Map();let TQ=Promise.resolve();
+const thumbQ=fn=>{const p=TQ.then(fn);TQ=p.catch(()=>{});return p};
+async function videoFrame(f){
+  const v=document.createElement('video');v.muted=true;v.preload='auto';v.playsInline=true;const u=URL.createObjectURL(f);v.src=u;
+  try{
+    await new Promise((res,rej)=>{v.onloadeddata=res;v.onerror=rej;setTimeout(rej,5000)});
+    v.currentTime=Math.min(1,(v.duration||2)/4);
+    await new Promise(res=>{v.onseeked=res;setTimeout(res,1500)});
+    const w=160,h=Math.round(w*(v.videoHeight||90)/(v.videoWidth||160));
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(v,0,0,w,h);return cv;
+  }finally{URL.revokeObjectURL(u);v.removeAttribute('src');try{v.load()}catch(x){}}
+}
+async function thumb(e){
+  const key=e.path+'|'+e.size+'|'+e.mtime;if(TH.has(key))return TH.get(key);
+  let url='';
+  try{
+    const m=mimeOf(e.name,e.type);let src;
+    if(m.startsWith('image/')&&m!=='image/svg+xml'&&e.size<40*1048576)src=await createImageBitmap(e.f,{resizeWidth:160,resizeQuality:'low'});
+    else if(m.startsWith('video/')&&e.size<1.5*1073741824)src=await videoFrame(e.f);
+    if(src){
+      const cv=document.createElement('canvas');cv.width=src.width;cv.height=src.height;cv.getContext('2d').drawImage(src,0,0);
+      const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',.7));if(b)url=URL.createObjectURL(b);
+      if(src.close)src.close();
+    }
+  }catch(x){}
+  TH.set(key,url);return url;
+}
+function iconBox(e,cls){
+  const box=mk('div',cls),gi=mk('div','gi',e.kind==='dir'?'📁':iconOf(e.name));box.append(gi);
+  if(e.kind==='dir')box.style.background='rgba(245,158,11,.18)';
+  else{
+    const c=catOf(e.name,e.type);
+    if(c==='img'||c==='vid'){
+      gi._load=async()=>{const u=await thumbQ(()=>thumb(e));if(u){const im=new Image();im.src=u;im.alt='';gi.textContent='';gi.append(im)}};
+      LAZY.push(gi);
+    }
+    if(c==='vid'||c==='aud'){const pl=mk('div','gplay');pl.append(mk('i',null,'▶'));box.append(pl)}
+  }
+  return box;
+}
+
+/* ---- menus & dialogs ---- */
+let MENU=null;
+function closeMenu(){if(MENU){MENU.remove();MENU=null}document.removeEventListener('pointerdown',menuOut,true)}
+function menuOut(e){if(MENU&&!MENU.contains(e.target))closeMenu()}
+function menu(anchor,items){
+  closeMenu();
+  const m=mk('div','gmenu');
+  items.forEach(it=>{
+    if(it==='-'){m.append(mk('hr'));return}
+    const b=mk('button',it.danger?'danger':'',(it.ic?it.ic+'  ':'')+it.label);
+    b.onclick=()=>{closeMenu();it.fn()};m.append(b);
+  });
+  document.body.append(m);MENU=m;
+  const r=anchor.getBoundingClientRect(),w=m.offsetWidth,h=m.offsetHeight;
+  let top=r.bottom+4;if(top+h>innerHeight-8)top=Math.max(8,r.top-h-4);
+  let left=document.documentElement.dir==='rtl'?r.left:r.right-w;
+  left=Math.max(8,Math.min(left,innerWidth-w-8));
+  m.style.top=top+'px';m.style.left=left+'px';
+  setTimeout(()=>document.addEventListener('pointerdown',menuOut,true),0);
+}
+function dlg(o){
+  return new Promise(res=>{
+    const i=$('#dI'),im=$('#dImg');im.hidden=!o.img;if(o.img)im.src=o.img;im.style.maxHeight=o.imgBig?'240px':'';im.style.background=o.imgBig?'#fff':'';im.style.padding=o.imgBig?'8px':'';
+    $('#dT').textContent=o.title||'';$('#dM').textContent=o.msg||'';
+    {const dl=$('#dList');dl.replaceChildren();dl.hidden=!o.items;if(o.items)reviewList(o.items)}
+    i.hidden=o.input==null;if(o.input!=null)i.value=o.input;i.type=o.secret?'password':'text';i.inputMode=o.secret?'numeric':'text';
+    $('#dNo').hidden=!!o.info;
+    $('#dOk').textContent=o.ok||t('ok');$('#dOk').classList.toggle('danger',!!o.danger);
+    $('#mDlg').classList.add('on');
+    if(o.input!=null)setTimeout(()=>{i.focus();i.select()},60);
+    const done=v=>{document.querySelectorAll('#dList .ginline').forEach(dropInline);$('#dList').replaceChildren();$('#mDlg').classList.remove('on');res(v)};
+    $('#dOk').onclick=()=>done(o.input!=null?i.value.trim():true);
+    $('#dNo').onclick=()=>done(null);
+    i.onkeydown=e=>{if(e.key==='Enter')$('#dOk').click();if(e.key==='Escape')done(null)};
+  });
+}
+function pickFolder(title,okLabel,exclude){
+  return new Promise(res=>{
+    let cur=dest();const m=$('#mPick'),L=$('#pkL');
+    $('#pkT').textContent=title;$('#pkOk').textContent=okLabel;m.classList.add('on');
+    const close=v=>{m.classList.remove('on');res(v)};
+    async function draw(){
+      $('#pkP').textContent='⌂ / '+cur.join(' / ');L.replaceChildren();
+      let dir;try{dir=await dirAt(cur,false)}catch(e){cur=[];dir=await dirAt([],false)}
+      if(cur.length){const u=mk('div','pkrow','⬑  ..');u.onclick=()=>{cur.pop();draw()};L.append(u)}
+      const names=[];
+      for await(const [n,h] of dir.entries()){if(h.kind==='directory'&&!exclude.includes([...cur,n].join('/'))&&!(!cur.length&&(n===TRASH||n===PRIVD)))names.push(n)}
+      names.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+      names.forEach(n=>{const r=mk('div','pkrow','📁  '+n);r.onclick=()=>{cur.push(n);draw()};L.append(r)});
+      if(!names.length&&!cur.length)L.append(mk('div','empty',t('emptyFolder')));
+    }
+    $('#pkNo').onclick=()=>close(null);
+    $('#pkOk').onclick=()=>close([...cur]);
+    $('#pkNew').onclick=async()=>{
+      const n=await dlg({title:t('newFolder'),input:'',ok:t('ok')});
+      if(n){try{await (await dirAt(cur,true)).getDirectoryHandle(clean(n),{create:true})}catch(x){toast(x.message)}draw()}
+    };
+    draw();
+  });
+}
+
+/* ---- inline preview: play / view a file right where it is ---- */
+const mediaKind=e=>{if(e.kind!=='file')return null;const c=catOf(e.name,e.type);return(c==='img'||c==='vid'||c==='aud')?c:null};
+function dropInline(box){
+  if(!box)return;
+  const m=box.querySelector('video,audio');
+  if(m){try{m.pause()}catch(x){}m.removeAttribute('src');try{m.load()}catch(x){}}
+  if(box._url){URL.revokeObjectURL(box._url);box._url=null}
+  box.remove();
+}
+function inlineBox(e){
+  const k=mediaKind(e);if(!k)return null;
+  const u=URL.createObjectURL(e.f);let m;
+  if(k==='img'){m=new Image();m.src=u;m.alt=''}
+  else{m=document.createElement(k==='vid'?'video':'audio');m.src=u;m.controls=true;m.autoplay=true;m.playsInline=true}
+  const box=mk('div','ginline '+k);box._url=u;box.append(m);
+  const x=mk('button','ibtn ginx gx','✕');x.onclick=ev=>{ev.stopPropagation();dropInline(box)};box.append(x);
+  return box;
+}
+function toggleInline(anchor,e){
+  const ex=anchor.nextElementSibling;
+  if(ex&&ex.classList.contains('ginline')){dropInline(ex);return}
+  anchor.parentElement.querySelectorAll(':scope > .ginline').forEach(dropInline);
+  const b=inlineBox(e);if(b)anchor.after(b);
+}
+function reviewList(es){
+  const L=$('#dList');L.replaceChildren();L.hidden=false;
+  es.forEach(e=>{
+    const r=mk('div','dli'),ic=iconBox(e,'gic'),gi=ic.querySelector('.gi');
+    if(gi&&gi._load){const i=LAZY.indexOf(gi);if(i>=0)LAZY.splice(i,1);gi._load()}
+    if(mediaKind(e)){ic.classList.add('gx');ic.style.cursor='pointer';ic.onclick=ev=>{ev.stopPropagation();toggleInline(r,e)}}
+    const info=mk('div','ginfo');info.append(mk('b',null,e.name),mk('span',null,e.kind==='dir'?t('items').replace('{n}',e.count):fmt(e.size)));
+    r.append(ic,info);L.append(r);
+  });
+}
+
+/* ---- rows / tiles / selection ---- */
+function metaOf(e,flat){
+  if(e.kind==='dir')return t('items').replace('{n}',e.count);
+  const par=flat?parentParts(e.path).join('/'):'';
+  return (LIB.cat==='dups'&&e.tag?e.tag+' · ':'')+(par?'📁 '+par+' · ':'')+fmt(e.size)+' · '+new Date(e.mtime).toLocaleDateString();
+}
+function row(e,flat){
+  const r=mk('div','grow');r.dataset.p=e.path;if(LIB.sel.has(e.path))r.classList.add('sel');
+  const ic=iconBox(e,'gic');
+  if(mediaKind(e)){ic.classList.add('gx');ic.style.cursor='pointer';ic.onclick=ev=>{ev.stopPropagation();toggleInline(r,e)}}
+  const info=mk('div','ginfo');info.append(mk('b',null,e.name),mk('span',null,metaOf(e,flat)+(e.kind==='dir'&&isSharedRoot(e.path)?' · 🔗 '+t('sharedTag'):'')+(e.kind==='dir'&&synOn(e.path)?' · 🔄 '+t('syncTag'):'')));
+  const del=mk('button','ibtn gx gdel','🗑');del.title=t('del');del.onclick=ev=>{ev.stopPropagation();opDelete([e])};
+  const ck=mk('button','gck gx');ck.setAttribute('aria-label','select');ck.onclick=ev=>{ev.stopPropagation();toggleSel(e)};
+  const dots=mk('button','ibtn gdots gx','⋮');dots.onclick=ev=>{ev.stopPropagation();entryMenu(dots,e)};
+  r.append(ic,info,ck,del,dots);bindEntry(r,e);return r;
+}
+function tile(e,flat){
+  const r=mk('div','gtile');r.dataset.p=e.path;if(LIB.sel.has(e.path))r.classList.add('sel');
+  const th=iconBox(e,'gth');const ck=mk('button','gck gx');ck.setAttribute('aria-label','select');ck.onclick=ev=>{ev.stopPropagation();toggleSel(e)};th.append(ck);
+  const dots=mk('button','gdots gtd gx','⋮');dots.onclick=ev=>{ev.stopPropagation();entryMenu(dots,e)};
+  r.append(th,mk('div','gn',e.name),mk('div','gm',e.kind==='dir'?metaOf(e,flat):fmt(e.size)),dots);
+  bindEntry(r,e);return r;
+}
+function bindEntry(node,e){
+  let timer=null,long=false,sx=0,sy=0;
+  const cancel=()=>clearTimeout(timer);
+  node.addEventListener('pointerdown',ev=>{
+    if(ev.target.closest('.gx'))return;
+    long=false;sx=ev.clientX;sy=ev.clientY;
+    timer=setTimeout(()=>{long=true;toggleSel(e,true)},480);
+  });
+  node.addEventListener('pointermove',ev=>{if(Math.abs(ev.clientX-sx)+Math.abs(ev.clientY-sy)>10)cancel()});
+  ['pointerup','pointerleave','pointercancel'].forEach(n=>node.addEventListener(n,cancel));
+  node.addEventListener('click',ev=>{
+    if(ev.target.closest('.gx'))return;
+    if(long){long=false;return}
+    if(LIB.selMode)toggleSel(e);else openEntry(e);
+  });
+  node.addEventListener('contextmenu',ev=>{ev.preventDefault();if(!LIB.selMode)toggleSel(e,true)});
+}
+function toggleSel(e,on){if(on===true||!LIB.sel.has(e.path))LIB.sel.add(e.path);else LIB.sel.delete(e.path);refreshSel()}
+function refreshSel(){
+  LIB.selMode=LIB.sel.size>0;
+  document.querySelectorAll('#gBody [data-p]').forEach(n=>n.classList.toggle('sel',LIB.sel.has(n.dataset.p)));
+  renderBar();fabUpdate();
+}
+const clearSel=()=>{LIB.sel.clear();refreshSel()};
+const selEntries=()=>LIB.cur.filter(e=>LIB.sel.has(e.path));
+function openEntry(e){
+  if(e.kind==='dir')nav({mode:'dir',path:e.path.split('/')});
+  else preview(e.f,e.name,e);
+}
+const emptyBox=(ico,txt)=>{const d=mk('div','gempty');d.append(mk('div','gei',ico),mk('div',null,txt));return d};
+function listNode(es,flat,emptyTxt){
+  LIB.cur=es;
+  if(!es.length)return emptyBox('📂',emptyTxt);
+  const w=mk('div',LIB.view==='grid'?'gf-grid':'gf-list');
+  es.forEach(e=>w.append(LIB.view==='grid'?tile(e,flat):row(e,flat)));
+  return w;
+}
+
+/* ---- views ---- */
+async function viewHome(){
+  const all=await getAll(),w=mk('div');
+  let usage=0,quota=0;try{const s=await navigator.storage.estimate();usage=s.usage||0;quota=s.quota||0}catch(e){}
+  const total=all.reduce((a,f)=>a+f.size,0);
+  const sc=mk('div','gcard'),top=mk('div','gst');
+  top.append(mk('b',null,t('storageT')),mk('span','sub2',fmt(total)+' '+t('inApp')));
+  const bar=mk('div','stor'),fill=mk('i');
+  fill.style.width=(quota?Math.min(100,Math.max(total?1.5:0,total/quota*100)):0)+'%';bar.append(fill);
+  sc.append(top,bar,mk('div','sub2',fmt(Math.max(0,quota-usage))+' '+t('free')));
+  w.append(sc);
+
+  w.append(mk('div','gsec',t('catT')));
+  const g=mk('div','gcats');
+  CATS.forEach(c=>{
+    const f=all.filter(x=>catOf(x.name,x.type)===c.id);
+    const d=mk('div','gcat'),ci=mk('div','ci',c.ico);ci.style.background=c.c+'2b';
+    d.append(ci,mk('div','cn',t(c.k)),mk('div','sub2',f.length+' · '+fmt(f.reduce((a,x)=>a+x.size,0))));
+    d.onclick=()=>nav({mode:'cat',cat:c.id});g.append(d);
+  });
+  w.append(g);
+
+  w.append(mk('div','gsec',t('toolsT')));
+  const tg=mk('div','gcats');
+  const tool=(ico,col,label,sub,fn)=>{const d=mk('div','gcat'),ci=mk('div','ci',ico);ci.style.background=col+'2b';d.append(ci,mk('div','cn',label),mk('div','sub2',sub));d.onclick=fn;return d};
+  tg.append(tool('🧹','#3b82f6',t('cleanT'),t('cleanSub'),()=>nav({mode:'clean'})));
+  tg.append(tool('🗑','#8b5cf6',t('binT'),String(trashList().length),()=>nav({mode:'bin'})));
+  tg.append(tool('🔒','#14b8a6',t('priv'),store.get('pin')?t('locked'):t('setup'),openPrivate));
+  w.append(tg);
+
+  const recent=[...all].sort((a,b)=>b.mtime-a.mtime).slice(0,12);
+  if(recent.length){
+    w.append(mk('div','gsec',t('recent')));
+    const rc=mk('div','grecent');
+    recent.forEach(e=>{
+      const c=mk('div','rc');c.append(iconBox(e,'gth'),mk('div','gn',e.name));
+      c.onclick=()=>preview(e.f,e.name,e);rc.append(c);
+    });
+    w.append(rc);
+  }
+
+  w.append(mk('div','gsec',t('folders')));
+  const fl=mk('div','gf-list');
+  const ar=mk('div','grow'),aic=mk('div','gic');aic.style.background='rgba(245,158,11,.18)';aic.append(mk('div','gi','📂'));
+  const ai=mk('div','ginfo');ai.append(mk('b',null,t('allFiles')),mk('span',null,all.length+' · '+fmt(total)));
+  ar.append(aic,ai);ar.onclick=()=>nav({mode:'dir',path:[]});fl.append(ar);
+  const dirs=sortEntries((await listDir([])).filter(e=>e.kind==='dir'),false);
+  LIB.cur=dirs;dirs.forEach(e=>fl.append(row(e,false)));
+  w.append(fl);
+  if(!all.length&&!dirs.length)w.append(emptyBox('📂',t('libEmpty')));
+  return w;
+}
+async function viewDir(){return listNode(sortEntries(await listDir(LIB.path),false),false,t('emptyFolder'))}
+async function viewCat(){
+  const id=LIB.cat;let es;
+  if(id==='dups'){
+    const gs=await findDups(),extras=[];es=[];
+    gs.forEach(g=>g.forEach((e,i)=>{e.tag=i?t('dupCopy'):t('keep');es.push(e);if(i)extras.push(e)}));
+    if(LIB.fresh){LIB.sel.clear();extras.forEach(e=>LIB.sel.add(e.path));LIB.selMode=LIB.sel.size>0;LIB.fresh=false}
+    return listNode(es,true,t('none'));
+  }
+  if(id==='large')es=(await getAll()).filter(e=>e.size>=LARGE).sort((a,b)=>b.size-a.size);
+  else if(id==='old')es=(await getAll()).filter(e=>e.mtime<Date.now()-OLDMS).sort((a,b)=>a.mtime-b.mtime);
+  else es=sortEntries((await getAll()).filter(f=>catOf(f.name,f.type)===id),true);
+  return listNode(es,true,t('noResults'));
+}
+async function viewSearch(){
+  const q=LIB.q.trim().toLowerCase();
+  return listNode(sortEntries((await getAll()).filter(f=>f.name.toLowerCase().includes(q)),true),true,t('noResults'));
+}
+
+/* ---- bar / render ---- */
+function renderCrumbs(){
+  const c=$('#gCrumbs');c.replaceChildren();
+  if(LIB.mode!=='dir'||LIB.searching||LIB.selMode){c.hidden=true;return}
+  c.hidden=false;
+  const add=(label,fn)=>{if(c.childNodes.length)c.append(mk('span','sep','›'));const a=mk('a',null,label);a.onclick=fn;c.append(a)};
+  add(t('tabFiles'),()=>nav({}));
+  add(t('allFiles'),()=>nav({mode:'dir',path:[]}));
+  LIB.path.forEach((p,i)=>add(p,()=>nav({mode:'dir',path:LIB.path.slice(0,i+1)})));
+}
+function renderBar(){
+  const sm=LIB.selMode,home=LIB.mode==='home';
+  $('#gBar').hidden=sm||LIB.searching;$('#gSel').hidden=!sm;$('#gSrch').hidden=!(LIB.searching&&!sm);
+  if(sm)$('#sCount').textContent=t('selected').replace('{n}',LIB.sel.size);
+  $('#gBack').hidden=home;$('#gView').hidden=home||LIB.mode==='clean'||LIB.mode==='bin';
+  $('#gView').textContent=LIB.view==='list'?'▦':'☰';
+  $('#gTitle').textContent=home?t('tabFiles'):LIB.mode==='clean'?t('cleanT'):LIB.mode==='bin'?t('binT'):LIB.mode==='cat'?catLabel(LIB.cat):(LIB.path.length?LIB.path[LIB.path.length-1]:t('allFiles'));
+  renderCrumbs();
+}
+function fabUpdate(){
+  const on=$('#p-files').classList.contains('on')&&OPFS&&!LIB.selMode&&!LIB.searching&&(LIB.mode==='home'||LIB.mode==='dir');
+  $('#fab').classList.toggle('on',on);
+}
+async function libRender(){
+  const gen=++LIB.gen;
+  if(LIB.mode==='dir'&&LIB.path[0]===PRIVD&&!PRIV.open){LIB.mode='home';LIB.path=[]}
+  document.querySelectorAll('#gBody .ginline').forEach(dropInline);
+  $('#fmNo').hidden=OPFS;renderBar();
+  const body=$('#gBody');
+  if(!OPFS){body.replaceChildren();fabUpdate();return}
+  io.disconnect();LAZY.length=0;
+  let node;
+  try{
+    node=LIB.searching&&LIB.q.trim()?await viewSearch():LIB.mode==='clean'?await viewClean():LIB.mode==='bin'?await viewBin():LIB.mode==='cat'?await viewCat():LIB.mode==='dir'?await viewDir():await viewHome();
+  }catch(e){
+    console.warn(e);LIB.mode='home';LIB.path=[];LIB.cat=null;node=await viewHome();
+  }
+  if(gen!==LIB.gen)return;
+  body.replaceChildren(node);
+  LAZY.splice(0).forEach(x=>io.observe(x));
+  renderBar();fabUpdate();
+}
+
+/* ---- operations ---- */
+async function copyTo(srcH,kind,destDir,name){
+  const nm=await uniqueName(destDir,name);
+  if(kind==='file'){
+    const f=await srcH.getFile(),h=await destDir.getFileHandle(nm,{create:true}),w=await h.createWritable();
+    await f.stream().pipeTo(w);
+  }else{
+    const nd=await destDir.getDirectoryHandle(nm,{create:true});
+    for await(const [n,h] of srcH.entries()){if(h.kind==='file'&&n.endsWith('.part'))continue;await copyTo(h,h.kind,nd,n)}
+  }
+  return nm;
+}
+const opSend=G(async es=>{
+  const go=()=>document.querySelector('.tab[data-tab=share]').click();
+  if(![...conns.values()].some(c=>c.ok)){go();toast(t('connFirst'));return}
+  const list=[];
+  for(const e of es){if(e.kind==='file')list.push({file:e.f,name:e.name});else for await(const x of walk(e.h,e.name+'/'))list.push(x)}
+  clearSel();go();await sendFiles(list);
+});
+const opDownload=G(async es=>{
+  let n=0;for(const e of es){if(e.kind==='file'){saveFile(e.f,e.name);n++}}
+  if(!n)toast(t('noFiles'));
+});
+const opDelete=G(async es=>{
+  const tot=es.reduce((n,e)=>n+(e.kind==='file'?e.size:0),0);
+  const note=(es.length>1?es.length+' · '+fmt(tot)+'\n':'')+t('checkHint')+'\n'+t('delNote');
+  const ok=await dlg({title:t('confirmDel').replace('{n}',es.length),msg:note,items:es,ok:t('del'),danger:true});
+  if(!ok)return;
+  for(const e of es)await toTrash(e);
+  clearSel();libDirty();toast(t('movedBin'));
+});
+const opRename=G(async e=>{
+  const v=await dlg({title:t('rename'),input:e.name,ok:t('rename')});
+  if(!v||v===e.name)return;
+  const nm=clean(v),d=await dirAt(parentParts(e.path),false);
+  if(await exists(d,nm))return toast(t('exists'));
+  let done=false;
+  if(e.h.move){try{await e.h.move(nm);done=true}catch(x){}}
+  if(!done){await copyTo(e.h,e.kind,d,nm);await d.removeEntry(e.name,{recursive:true})}
+  clearSel();libDirty();
+});
+const opMove=G(async(es,copy)=>{
+  const target=await pickFolder(copy?t('copyT'):t('moveT'),copy?t('copyHere'):t('moveHere'),es.filter(e=>e.kind==='dir').map(e=>e.path));
+  if(!target)return;
+  const dd=await dirAt(target,true),tp=target.join('/');
+  for(const e of es){
+    const pp=parentParts(e.path).join('/');
+    if(!copy&&pp===tp)continue;
+    if(e.kind==='dir'&&(tp+'/').startsWith(e.path+'/'))throw new Error(t('notSupported'));
+    await copyTo(e.h,e.kind,dd,e.name);
+    if(!copy){const sd=await dirAt(parentParts(e.path),false);await sd.removeEntry(e.name,{recursive:true})}
+  }
+  clearSel();libDirty();
+});
+const opInfo=G(async e=>{
+  let size=e.size,extra='';
+  if(e.kind==='dir'){let s=0,n=0;for await(const x of walk(e.h,'')){s+=x.file.size;n++}size=s;extra=t('items').replace('{n}',n)}
+  const lines=[e.name,'',t('fpath')+': /'+parentParts(e.path).join('/'),t('size')+': '+fmt(size)+(extra?' · '+extra:'')];
+  if(e.kind==='file')lines.push(t('ftype')+': '+(mimeOf(e.name,e.type)||ext(e.name)||'—'),t('fmod')+': '+new Date(e.mtime).toLocaleString());
+  await dlg({title:t('info'),msg:lines.join('\n'),ok:t('ok'),info:true});
+});
+const opNewFolder=G(async()=>{
+  const n=await dlg({title:t('newFolder'),input:'',ok:t('ok')});if(!n)return;
+  await (await dirAt(dest(),true)).getDirectoryHandle(clean(n),{create:true});libDirty();
+});
+const libAdd=G(async(files,destParts)=>{
+  let n=0;
+  for(const f of files){
+    const parts=splitPath(f.webkitRelativePath||f.name),nm=parts.pop()||'file';
+    const d=await dirAt([...destParts,...parts],true),fn=await uniqueName(d,nm);
+    const h=await d.getFileHandle(fn,{create:true}),w=await h.createWritable();
+    await f.stream().pipeTo(w);n++;
+  }
+  libDirty();if(n)toast('✓ '+n);
+});
+function selItems(es){
+  const one=es.length===1,it=[];
+  if(one)it.push({ic:'✎',label:t('rename'),fn:()=>opRename(es[0])});
+  it.push({ic:'⬇',label:t('download'),fn:()=>opDownload(es)},{ic:'➜',label:t('moveT'),fn:()=>opMove(es,false)},{ic:'⧉',label:t('copyT'),fn:()=>opMove(es,true)});
+  if(es.every(e=>e.path.split('/')[0]!==PRIVD))it.push({ic:'🔒',label:t('toPriv'),fn:()=>opToPrivate(es)});
+  if(one)it.push({ic:'ⓘ',label:t('info'),fn:()=>opInfo(es[0])});
+  it.push('-',{ic:'🗑',label:t('del'),danger:true,fn:()=>opDelete(es)});
+  return it;
+}
+function entryMenu(anchor,e){
+  const hid=e.path.split('/')[0][0]==='.';
+  const sh=e.kind==='dir'&&!hid?[{ic:'🔗',label:isSharedRoot(e.path)?t('unshare'):t('shareFolder'),fn:()=>toggleShare(e)},...(e.path===e.name?[{ic:'🔄',label:synOn(e.name)?t('syncStop'):t('syncStart'),fn:()=>opSync(e)}]:[]),...(synOn(e.path)?[{ic:'⟳',label:t('syncNow'),fn:()=>conns.forEach(c=>synSend(c))}]:[])]:e.kind==='file'&&!hid?[{ic:'🌐',label:t('shareLink'),fn:()=>opShareLink(e)}]:[];
+  menu(anchor,[{ic:'↗',label:t('open'),fn:()=>openEntry(e)},{ic:'📤',label:t('send'),fn:()=>opSend([e])},...sh,...selItems([e])]);
+}
+
+/* ---- Recycle bin ---- */
+const TRASH='.trash',PRIVD='.private';
+const trashList=()=>store.get('trash',[]);
+const trashDir=async()=>(await root()).getDirectoryHandle(TRASH,{create:true});
+async function dirSize(h){let s=0;for await(const x of walk(h,''))s+=x.file.size;return s}
+async function toTrash(e){
+  try{
+    const top=e.path.split('/')[0];
+    if(synOn(top)){
+      const L=synSkip();
+      if(e.kind==='file')L.push(e.path);else for await(const x of walk(e.h,''))L.push(e.path+'/'+x.name);
+      store.set('synskip',L.slice(-5000));
+    }
+  }catch(x){}
+  const td=await trashDir(),id=rid(),sub=await td.getDirectoryHandle(id,{create:true});
+  const size=e.kind==='file'?e.size:await dirSize(e.h);
+  let moved=false;
+  if(e.h.move){try{await e.h.move(sub,e.name);moved=true}catch(x){}}
+  if(!moved){await copyTo(e.h,e.kind,sub,e.name);const sd=await dirAt(parentParts(e.path),false);await sd.removeEntry(e.name,{recursive:true})}
+  const L=trashList();L.unshift({id,name:e.name,path:e.path,kind:e.kind,size,ts:Date.now()});store.set('trash',L);
+}
+function ago(ts){const d=(Date.now()-ts)/1000;if(d<60)return t('justNow');if(d<3600)return Math.floor(d/60)+' min';if(d<86400)return Math.floor(d/3600)+' h';return Math.floor(d/86400)+' d'}
+async function viewBin(){
+  const w=mk('div'),L=trashList(),td=await trashDir(),rows=[],keep=[];
+  for(const rec of L){
+    try{
+      const sub=await td.getDirectoryHandle(rec.id);
+      const h=rec.kind==='file'?await sub.getFileHandle(rec.name):await sub.getDirectoryHandle(rec.name);
+      const f=rec.kind==='file'?await h.getFile():null;
+      rows.push({rec,e:{name:rec.name,path:TRASH+'/'+rec.id+'/'+rec.name,kind:rec.kind,size:rec.size,mtime:rec.ts,type:f?f.type:'',h,f,count:0}});keep.push(rec);
+    }catch(x){}
+  }
+  if(keep.length!==L.length)store.set('trash',keep);
+  w.append(mk('div','gnote',t('binNote')));
+  LIB.cur=[];
+  if(!rows.length){w.append(emptyBox('🗑',t('binEmpty')));return w}
+  const list=mk('div','gf-list');
+  rows.forEach(({rec,e})=>{
+    const r=mk('div','grow'),ic=iconBox(e,'gic');
+    if(mediaKind(e)){ic.classList.add('gx');ic.style.cursor='pointer';ic.onclick=ev=>{ev.stopPropagation();toggleInline(r,e)}}
+    const info=mk('div','ginfo'),from=rec.path.split('/').slice(0,-1).join('/');
+    info.append(mk('b',null,rec.name),mk('span',null,fmt(rec.size)+' · '+ago(rec.ts)+(from?' · 📁 '+from:'')));
+    const rs=mk('button','ibtn gx','↩');rs.title=t('restore');rs.onclick=ev=>{ev.stopPropagation();restoreRec(rec)};
+    const dl=mk('button','ibtn gx gdel','🗑');dl.title=t('delForever');dl.onclick=ev=>{ev.stopPropagation();purgeRec(rec,e)};
+    r.append(ic,info,rs,dl);
+    r.onclick=ev=>{if(ev.target.closest('.gx'))return;if(e.f)preview(e.f,e.name)};
+    list.append(r);
+  });
+  w.append(list);return w;
+}
+const restoreRec=G(async rec=>{
+  store.set('synskip',synSkip().filter(x=>x!==rec.path&&!x.startsWith(rec.path+'/')));
+  const td=await trashDir(),sub=await td.getDirectoryHandle(rec.id);
+  const dd=await dirAt(rec.path.split('/').slice(0,-1),true),nm=await uniqueName(dd,rec.name);
+  const h=rec.kind==='file'?await sub.getFileHandle(rec.name):await sub.getDirectoryHandle(rec.name);
+  let moved=false;
+  if(h.move){try{await h.move(dd,nm);moved=true}catch(x){}}
+  if(!moved)await copyTo(h,rec.kind,dd,nm);
+  await td.removeEntry(rec.id,{recursive:true});
+  store.set('trash',trashList().filter(r=>r.id!==rec.id));
+  libDirty();toast(t('restored'));
+});
+const purgeRec=G(async(rec,e)=>{
+  const ok=await dlg({title:t('delForever'),msg:t('delNote2'),items:[e],ok:t('delForever'),danger:true});
+  if(!ok)return;
+  try{await (await trashDir()).removeEntry(rec.id,{recursive:true})}catch(x){}
+  store.set('trash',trashList().filter(r=>r.id!==rec.id));libDirty();
+});
+const emptyBin=G(async()=>{
+  const L=trashList();if(!L.length)return;
+  const ok=await dlg({title:t('emptyBin'),msg:L.length+' · '+fmt(L.reduce((a,r)=>a+r.size,0))+'\n'+t('delNote2'),ok:t('emptyBin'),danger:true});
+  if(!ok)return;
+  const td=await trashDir();for(const r of L){try{await td.removeEntry(r.id,{recursive:true})}catch(x){}}
+  store.set('trash',[]);libDirty();
+});
+async function purgeTrash(){
+  if(!OPFS)return;
+  const L=trashList(),cut=Date.now()-30*864e5,old=L.filter(r=>r.ts<cut);if(!old.length)return;
+  try{const td=await trashDir();for(const r of old){try{await td.removeEntry(r.id,{recursive:true})}catch(x){}}}catch(x){}
+  store.set('trash',L.filter(r=>r.ts>=cut));
+}
+
+/* ---- Private folder (PIN) ---- */
+const PRIV={open:false};
+const b64=u=>btoa(String.fromCharCode(...new Uint8Array(u))),unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function pinHash(pin,salt){
+  const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+  return new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:120000,hash:'SHA-256'},k,256));
+}
+const askPin=(title,msg)=>dlg({title,msg,input:'',secret:true,ok:t('ok')});
+async function ensurePin(){
+  if(store.get('pin'))return true;
+  const a=await askPin(t('setPin'),t('pinHint'));if(a==null||a==='')return false;
+  if(!/^\d{4,}$/.test(a)){toast(t('pinShort'));return false}
+  const b=await askPin(t('confirmPin'),'');if(b!==a){toast(t('pinBad'));return false}
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  store.set('pin',{s:b64(salt),h:b64(await pinHash(a,salt))});return true;
+}
+const openPrivate=G(async()=>{
+  if(!store.get('pin')){if(!(await ensurePin()))return}
+  else{
+    const p=store.get('pin'),v=await askPin(t('enterPin'),'');if(v==null||v==='')return;
+    if(b64(await pinHash(v,unb64(p.s)))!==p.h){toast(t('pinWrong'));return}
+  }
+  await dirAt([PRIVD],true);PRIV.open=true;nav({mode:'dir',path:[PRIVD]});
+});
+const opToPrivate=G(async es=>{
+  if(!(await ensurePin()))return;
+  const dd=await dirAt([PRIVD],true);
+  for(const e of es){
+    if(e.path.split('/')[0]===PRIVD)continue;
+    let mv=false;
+    if(e.h.move){try{await e.h.move(dd,e.name);mv=true}catch(x){}}
+    if(!mv){await copyTo(e.h,e.kind,dd,e.name);const sd=await dirAt(parentParts(e.path),false);await sd.removeEntry(e.name,{recursive:true})}
+  }
+  clearSel();libDirty();toast(t('movedPriv'));
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)PRIV.open=false;
+  else if(LIB.mode==='dir'&&LIB.path[0]===PRIVD&&!PRIV.open)nav({});
+});
+
+/* ---- Clean: duplicates / large / old ---- */
+const CRCC=new Map();
+async function crcOf(e){const k=e.path+'|'+e.size+'|'+e.mtime;if(CRCC.has(k))return CRCC.get(k);const v=await crcOfBlob(e.f);CRCC.set(k,v);return v}
+async function findDups(){
+  const all=await getAll(),by=new Map(),groups=[];
+  all.forEach(e=>{if(e.size>0){const a=by.get(e.size)||[];a.push(e);by.set(e.size,a)}});
+  for(const a of by.values()){
+    if(a.length<2)continue;
+    const m=new Map();
+    for(const e of a){const c=await crcOf(e),g=m.get(c)||[];g.push(e);m.set(c,g)}
+    m.forEach(g=>{if(g.length>1)groups.push(g.sort((x,y)=>x.mtime-y.mtime))});
+  }
+  return groups;
+}
+const LARGE=25*1048576,OLDMS=60*864e5;
+async function viewClean(){
+  const all=await getAll(),w=mk('div');
+  w.append(mk('div','gnote',t('cleanNote')));
+  const dups=await findDups();
+  const extraN=dups.reduce((n,g)=>n+g.length-1,0),extra=dups.reduce((n,g)=>n+g.slice(1).reduce((a,e)=>a+e.size,0),0);
+  const large=all.filter(e=>e.size>=LARGE),old=all.filter(e=>e.mtime<Date.now()-OLDMS);
+  const sum=a=>a.reduce((n,e)=>n+e.size,0);
+  const card=(ico,col,title,sub,go)=>{
+    const d=mk('div','gcl'),ci=mk('div','ci',ico);ci.style.background=col+'2b';
+    const i=mk('div','ginfo');i.append(mk('b',null,title),mk('span',null,sub));d.append(ci,i,mk('div','chev','›'));d.onclick=go;return d;
+  };
+  const g=mk('div','gf-list');
+  g.append(card('👯','#3b82f6',t('cDups'),extraN?t('dupInfo').replace('{n}',extraN).replace('{s}',fmt(extra)):t('none'),()=>nav({mode:'cat',cat:'dups'})));
+  g.append(card('🐘','#ef4444',t('cLarge'),large.length?large.length+' · '+fmt(sum(large)):t('none'),()=>nav({mode:'cat',cat:'large'})));
+  g.append(card('🕰️','#f59e0b',t('cOld'),old.length?old.length+' · '+fmt(sum(old)):t('none'),()=>nav({mode:'cat',cat:'old'})));
+  const tl=trashList();
+  g.append(card('🗑','#8b5cf6',t('binT'),tl.length?tl.length+' · '+fmt(tl.reduce((a,r)=>a+r.size,0))+' — '+t('emptyBinHint'):t('binEmpty'),()=>nav({mode:'bin'})));
+  const parts=await partInfo();
+  if(parts.length)g.insertBefore(card('⏳','#f97316',t('cPart'),parts.length+' · '+fmt(parts.reduce((a,x)=>a+x.size,0))+' — '+t('partNote'),delParts),g.firstChild);
+  w.append(g);LIB.cur=[];return w;
+}
+async function partInfo(){
+  const out=[],P=store.get('part',{});
+  for(const k of Object.keys(P)){
+    const rec=P[k];
+    try{const d=await dirAt(rec.dir?rec.dir.split('/'):[],false),f=await (await d.getFileHandle(rec.name+'.part')).getFile();out.push({k,rec,d,size:f.size})}catch(e){}
+  }
+  return out;
+}
+const delParts=G(async()=>{
+  const ps=await partInfo();if(!ps.length)return;
+  const ok=await dlg({title:t('delParts'),msg:ps.map(x=>x.rec.name+' — '+fmt(x.size)).join('\n'),ok:t('del'),danger:true});if(!ok)return;
+  const P=store.get('part',{});
+  for(const x of ps){try{await x.d.removeEntry(x.rec.name+'.part')}catch(e){}delete P[x.k]}
+  store.set('part',P);libDirty();toast(t('partsDeleted'));
+});
+
+/* ---- wiring ---- */
+$('#gBack').onclick=()=>{if(history.state&&history.state.fm)history.back();else nav({})};
+$('#gSearch').onclick=()=>{LIB.searching=true;renderBar();fabUpdate();$('#fmQ').focus()};
+$('#sClose').onclick=()=>{LIB.searching=false;LIB.q='';$('#fmQ').value='';libRender()};
+$('#sClr').onclick=()=>{$('#fmQ').value='';LIB.q='';libRender();$('#fmQ').focus()};
+let qTimer;$('#fmQ').oninput=e=>{LIB.q=e.target.value;clearTimeout(qTimer);qTimer=setTimeout(libRender,180)};
+$('#gView').onclick=()=>{LIB.view=LIB.view==='list'?'grid':'list';store.set('fmView',LIB.view);libRender()};
+$('#gMore').onclick=e=>{
+  const so=(id,label)=>({ic:LIB.sort===id?'✓':'   ',label,fn:()=>{LIB.sort=id;store.set('fmSort',id);libRender()}});
+  const it=[{label:t('sortBy'),fn:()=>{}},so('name',t('name')),so('date',t('date')),so('size',t('size'))];
+  it[0].ic='⇅';
+  if(LIB.mode==='home'||LIB.mode==='dir')it.push('-',{ic:'🆕',label:t('newFolder'),fn:opNewFolder});
+  if(LIB.mode==='bin')it.push('-',{ic:'🗑',label:t('emptyBin'),danger:true,fn:emptyBin});
+  if(LIB.mode!=='home'&&LIB.cur.length)it.push({ic:'☑',label:t('selAll'),fn:()=>{LIB.cur.forEach(x=>LIB.sel.add(x.path));refreshSel()}});
+  menu(e.currentTarget,it);
+};
+$('#sX').onclick=clearSel;
+$('#sAll').onclick=()=>{if(LIB.sel.size===LIB.cur.length)clearSel();else{LIB.cur.forEach(x=>LIB.sel.add(x.path));refreshSel()}};
+$('#sSend').onclick=()=>opSend(selEntries());
+$('#sMore').onclick=e=>menu(e.currentTarget,selItems(selEntries()));
+$('#fab').onclick=e=>menu(e.currentTarget,[
+  {ic:'＋',label:t('addFiles'),fn:()=>$('#fmIn').click()},
+  {ic:'📁',label:t('addFolder'),fn:()=>$('#fmInDir').click()},
+  {ic:'🆕',label:t('newFolder'),fn:opNewFolder}
+]);
+$('#fmIn').onchange=e=>{libAdd([...e.target.files],dest());e.target.value=''};
+$('#fmInDir').onchange=e=>{libAdd([...e.target.files],dest());e.target.value=''};
+addEventListener('keydown',e=>{
+  const pv=$('#mView').classList.contains('on');
+  if(pv&&pvEntry&&e.key==='ArrowLeft'){pvStep(-1);return}
+  if(pv&&pvEntry&&e.key==='ArrowRight'){pvStep(1);return}
+  if(e.key!=='Escape')return;
+  if(MENU)closeMenu();else if($('#mView').classList.contains('on'))closePreview();else if(LIB.selMode)clearSel();
+});
+
+/* ================= history ================= */
+function histRender(){
+  const box=$('#histList');box.innerHTML='';const h=store.get('hist',[]);
+  if(!h.length){box.innerHTML='<div class="empty">'+t('noHist')+'</div>';return}
+  {
+    const ok=h.filter(o=>!o.x&&!o.err),out=ok.filter(o=>o.d==='out'),inn=ok.filter(o=>o.d==='in'),bad=h.filter(o=>o.err);
+    const sum=a=>a.reduce((n,o)=>n+(o.s||0),0),sp=ok.filter(o=>o.sp>0),avg=sp.length?sp.reduce((n,o)=>n+o.sp,0)/sp.length:0;
+    const c=document.createElement('div');c.className='gnote';c.style.whiteSpace='normal';
+    c.innerHTML='<b></b><div class="rep"></div>';c.querySelector('b').textContent=t('repT');
+    c.querySelector('.rep').textContent='↑ '+t('repSent')+': '+t('repFiles').replace('{n}',out.length)+' · '+fmt(sum(out))+'   ↓ '+t('repRecv')+': '+t('repFiles').replace('{n}',inn.length)+' · '+fmt(sum(inn))+(avg?'   ⚡ '+t('repAvg')+': '+fmt(avg)+'/s':'')+(bad.length?'   ✕ '+t('repFail')+': '+bad.length:'');
+    box.append(c);
+  }
+  h.forEach(o=>{
+    const d=document.createElement('div');d.className='item '+(o.d==='in'?'in':'');
+    d.innerHTML='<div class="ic"></div><div class="mid"><div class="nm"></div><div class="sub"></div></div>';
+    d.querySelector('.ic').textContent=o.x?'💬':(o.d==='out'?'↑':'↓');d.querySelector('.nm').textContent=o.n;
+    d.querySelector('.sub').textContent=(o.err?t('histFailed')+' '+o.err+' · ':'')+(o.s?fmt(o.s)+' · ':'')+(o.p?o.p+' · ':'')+(o.sp?fmt(o.sp)+'/s · ':'')+(o.dur>1000?fmtT(o.dur/1000)+' · ':'')+(o.v?'✓ · ':'')+new Date(o.ts).toLocaleString();
+    box.append(d);
+  });
+}
+
+/* ================= settings ================= */
+function fillSettings(){
+  $('#sName').value=S.name;$('#sTheme').value=S.theme||'';$('#sAuto').checked=S.autosave;$('#sComp').checked=S.compress;$('#sVerify').checked=S.verify!==false;$('#sPack').checked=S.pack!==false;$('#sLimit').value=S.limit||0;$('#sClip').checked=!!S.clip;if(typeof pcUi==='function')pcUi();$('#sVibe').checked=S.vibe!==false;
+  $('#sQ').value=S.quality;$('#sQv').textContent=S.quality+'%';
+  $('#turnUrl').value=S.turn.url||'';$('#turnUser').value=S.turn.user||'';$('#turnCred').value=S.turn.cred||'';
+}
+
+/* ================= wiring ================= */
+$$('.tab').forEach(b=>b.onclick=()=>{
+  $$('.tab').forEach(x=>x.classList.toggle('on',x===b));$$('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+b.dataset.tab));
+  if(b.dataset.tab==='files')libRender();if(b.dataset.tab==='hist')histRender();fabUpdate();
+});
+$('#langBtn').onclick=()=>{S.lang=S.lang==='ur'?'en':'ur';saveS();applyLang();renderPeers();renderKnown();renderTrusted();histRender();libRender()};
+$('#themeBtn').onclick=()=>{const light=document.documentElement.classList.contains('light');S.theme=light?'dark':'light';saveS();applyTheme();fillSettings()};
+$('#go').onclick=()=>connect($('#join').value);
+$('#join').onkeydown=e=>{if(e.key==='Enter')connect(e.target.value)};
+$('#copy').onclick=()=>navigator.clipboard.writeText(link()).then(()=>toast(t('linkCopied')));
+$('#newcode').onclick=()=>{conns.forEach(c=>c.close());peer.destroy();start(genCode())};
+$('#pickFiles').onclick=()=>$('#files').click();
+$('#pickFolder').onclick=()=>$('#folder').click();
+const drop=$('#drop');drop.onclick=()=>$('#files').click();
+$('#files').onchange=e=>{sendFiles(fromList(e.target.files));e.target.value=''};
+$('#folder').onchange=e=>{sendFiles(fromList(e.target.files));e.target.value=''};
+['dragenter','dragover'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',async e=>{
+  const items=[...(e.dataTransfer.items||[])].map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
+  if(!items.length)return sendFiles(fromList(e.dataTransfer.files));
+  const out=[];
+  const rd=en=>new Promise(r=>en.createReader().readEntries(r));
+  async function go(en,pre){
+    if(en.isFile){const f=await new Promise(r=>en.file(r));out.push({file:f,name:pre+en.name})}
+    else{let all=[],b;const rdr=en.createReader();do{b=await new Promise(r=>rdr.readEntries(r));all=all.concat([...b])}while(b.length);for(const x of all)await go(x,pre+en.name+'/')}
+  }
+  for(const en of items)await go(en,'');
+  sendFiles(out);
+});
+$('#sendTxt').onclick=sendText;
+$('#paste').onclick=async()=>{try{$('#txt').value=await navigator.clipboard.readText()}catch(e){toast('Clipboard blocked')}};
+addEventListener('paste',e=>{if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')return;const fs=[...(e.clipboardData?.files||[])];if(fs.length)sendFiles(fromList(fs))});
+$('#mvClose').onclick=closePreview;$('#mView').onclick=e=>{if(e.target.id==='mView')closePreview()};
+$('#mvSave').onclick=()=>pvFile&&saveFile(pvFile,pvName);
+$('#mvPrev').onclick=()=>pvStep(-1);$('#mvNext').onclick=()=>pvStep(1);
+$('#mvSend').onclick=()=>{const e=pvEntry;closePreview();if(e)opSend([e])};
+$('#mvDel').onclick=()=>{const e=pvEntry;closePreview();if(e)opDelete([e])};
+$('#histClear').onclick=()=>{store.set('hist',[]);histRender()};
+$('#histCsv').onclick=()=>{
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',rows=[['time','direction','name','bytes','device','bytes_per_sec','duration_ms','verified','error']];
+  store.get('hist',[]).filter(o=>!o.x).forEach(o=>rows.push([new Date(o.ts).toISOString(),o.d,o.n,o.s||0,o.p||'',o.sp||'',o.dur||'',o.v?'yes':'',o.err||'']));
+  const b=new Blob(['\ufeff'+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download='fileshare-report.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+};
+// settings
+$('#sName').onchange=e=>{S.name=e.target.value.trim()||dev;saveS()};
+$('#sTheme').onchange=e=>{S.theme=e.target.value;saveS();applyTheme()};
+$('#sAuto').onchange=e=>{S.autosave=e.target.checked;saveS()};
+$('#sComp').onchange=e=>{S.compress=e.target.checked;saveS()};
+$('#sVibe').onchange=e=>{S.vibe=e.target.checked;saveS()};
+$('#sVerify').onchange=e=>{S.verify=e.target.checked;saveS()};
+$('#sPack').onchange=e=>{S.pack=e.target.checked;saveS()};
+$('#sLimit').onchange=e=>{S.limit=Math.max(0,parseFloat(e.target.value)||0);saveS()};
+$('#sClip').onchange=e=>{S.clip=e.target.checked;saveS();clipStart()};
+$('#pcPick').onclick=pcPick;
+$('#sPc').onchange=e=>{S.pcsave=e.target.checked;saveS();conns.forEach(sendInfo)};
+$('#sPcMove').onchange=e=>{S.pcmove=e.target.checked;saveS();conns.forEach(sendInfo)};
+clipStart();pcLoad();
+$('#offBtn').onclick=offOpen;$('#offX').onclick=()=>{$('#mOff').classList.remove('on');offStopScan()};
+$('#offStartB').onclick=offStart;$('#offJoinB').onclick=()=>{$('#offHost').hidden=true;$('#offJoin').hidden=false};
+$('#offFin').onclick=offFinish;$('#offMk').onclick=offAnswer;
+$('#offScanH').onclick=()=>offScan('#offHostIn');$('#offScanJ').onclick=()=>offScan('#offJoinIn');
+$('#pauseAll').onclick=pauseAll;$('#resumeAll').onclick=resumeAll;$('#clearDone').onclick=clearDone;
+if(matchMedia('(pointer:coarse)').matches){$('#camPB').hidden=false;$('#camVB').hidden=false}
+$('#camPB').onclick=()=>$('#camP').click();$('#camVB').onclick=()=>$('#camV').click();
+['camP','camV'].forEach(i=>$('#'+i).onchange=e=>{sendFiles(fromList(e.target.files));e.target.value=''});
+$('#pinReset').onclick=G(async()=>{const ok=await dlg({title:t('pinReset'),msg:t('pinResetNote'),ok:t('pinReset'),danger:true});if(!ok)return;try{await (await root()).removeEntry(PRIVD,{recursive:true})}catch(e){}store.set('pin',null);PRIV.open=false;libDirty();toast(t('done'))});
+$('#sQ').oninput=e=>{S.quality=+e.target.value;$('#sQv').textContent=S.quality+'%';saveS()};
+$('#turnSave').onclick=()=>{S.turn={url:$('#turnUrl').value.trim(),user:$('#turnUser').value.trim(),cred:$('#turnCred').value};saveS();conns.forEach(c=>c.close());peer.destroy();start(myCode);toast(t('conning'))};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&conns.size)keepAwake()});
+addEventListener('beforeunload',e=>{if([...ITEMS.values()].some(i=>i.state==='run')){e.preventDefault();e.returnValue=''}});
+if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+
+function loadLib(urls,test){
+  return new Promise(res=>{
+    let i=0;
+    (function next(){
+      if(test()){res(true);return}
+      if(i>=urls.length){res(false);return}
+      const s=document.createElement('script');s.src=urls[i++];s.onload=next;s.onerror=next;document.head.appendChild(s);
+    })();
+  });
+}
+applyTheme();applyLang();fillSettings();renderPeers();renderKnown();renderTrusted();histRender();
+(async()=>{
+  if(history.state&&history.state.fm)setLoc(history.state.fm);
+  const qs=new URLSearchParams(location.search);
+  purgeTrash();
+  if(DLMODE){$('.tab[data-tab=share]').click();toast(t('dlGetting'))}
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  if(qs.get('c')||qs.get('shared'))document.querySelector('.tab[data-tab=share]').click();else libRender();
+  loadLib(['https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js','https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'],()=>!!window.QRCode).then(()=>{if(myCode)drawQR()});
+  const ok=await loadLib(['https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js','https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js','https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js'],()=>!!window.Peer);
+  if(!ok){status('⚠ offline','err');toast(t('libFail'));return}
+  start();loadShared();
+})();
+</script>
+</body>
+</html>
